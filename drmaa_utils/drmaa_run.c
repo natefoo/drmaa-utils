@@ -1,5 +1,21 @@
-
-#include "drmaa.h"
+/* $Id: $ */
+/*
+ * HPC-BASH - part of the DRMAA utilities library
+ * Poznan Supercomputing and Networking Center Copyright (C) 2010
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <stdio.h>
 #include <dlfcn.h>
@@ -7,119 +23,295 @@
 #include <stdlib.h>
 #include <assert.h>
 
-extern char **environ;
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
+#include "drmaa.h"
+
+extern char **environ;
 
 #define DRMAA_PATH "DRMAA_PATH"
 #define DRMAA_DEBUG "DRMAA_DEBUG"
 
+typedef int (*drmaa_init_function_t)(const char *, char *, size_t );
+typedef int (*drmaa_exit_function_t)(char *, size_t );
+typedef int (*drmaa_allocate_job_template_function_t)(drmaa_job_template_t **, char *, size_t);
+typedef int (*drmaa_delete_job_template_function_t)(drmaa_job_template_t *, char *, size_t);
+typedef int (*drmaa_set_attribute_function_t)(drmaa_job_template_t *, const char *, const char *, char *, size_t);
+typedef int (*drmaa_get_attribute_function_t)(drmaa_job_template_t *, const char *, char *, size_t , char *, size_t);
+typedef int (*drmaa_set_vector_attribute_function_t)(drmaa_job_template_t *, const char *, const char *[], char *, size_t);
+typedef int (*drmaa_get_vector_attribute_function_t)(drmaa_job_template_t *, const char *, drmaa_attr_values_t **, char *, size_t);
+typedef int (*drmaa_run_job_function_t)(char *, size_t, const drmaa_job_template_t *, char *, size_t);
+typedef int (*drmaa_control_function_t)(const char *, int, char *, size_t);
+typedef int (*drmaa_job_ps_function_t)(const char *, int *, char *, size_t);
+typedef int (*drmaa_wait_function_t)(const char *, char *, size_t, int *, signed long, drmaa_attr_values_t **, char *, size_t);
+typedef int (*drmaa_wifexited_function_t)(int *, int, char *, size_t);
+typedef int (*drmaa_wexitstatus_function_t)(int *exit_status, int, char *, size_t);
+typedef int (*drmaa_wifsignaled_function_t)(int *signaled, int, char *, size_t);
+typedef int (*drmaa_wtermsig_function_t)(char *signal, size_t signal_len, int, char *, size_t);
+typedef int (*drmaa_wcoredump_function_t)(int *core_dumped, int, char *, size_t);
+typedef int (*drmaa_wifaborted_function_t)(int *aborted, int, char *, size_t);
+typedef char (*drmaa_strerror_function_t)(int);
+typedef int (*drmaa_get_contact_function_t)(char *, size_t , char *, size_t);
+typedef int (*drmaa_version_function_t)(unsigned int *, unsigned int *, char *, size_t);
+typedef int (*drmaa_get_DRM_system_function_t)(char *, size_t, char *, size_t);
+typedef int (*drmaa_get_DRMAA_implementation_function_t)(char *, size_t, char *, size_t);
 
-int main(int argc, char **argv)
+typedef struct
 {
+	drmaa_init_function_t init;
+	drmaa_exit_function_t exit;
+	drmaa_allocate_job_template_function_t allocate_job_template;
+	drmaa_delete_job_template_function_t delete_job_template;
+	drmaa_set_attribute_function_t set_attribute;
+	drmaa_get_attribute_function_t get_attribute;
+	drmaa_set_vector_attribute_function_t set_vector_attribute;
+	drmaa_get_vector_attribute_function_t get_vector_attribute;
+	drmaa_run_job_function_t run_job;
+	drmaa_control_function_t control;
+	drmaa_job_ps_function_t job_ps;
+	drmaa_wait_function_t wait;
+	drmaa_wifexited_function_t wifexited;
+	drmaa_wexitstatus_function_t wexitstatus;
+	drmaa_wifsignaled_function_t wifsignaled;
+	drmaa_wtermsig_function_t wtermsig;
+	drmaa_wcoredump_function_t wcoredump;
+	drmaa_wifaborted_function_t wifaborted;
+	drmaa_strerror_function_t strerror;
+	drmaa_get_contact_function_t get_contact;
+	drmaa_version_function_t version;
+	drmaa_get_DRM_system_function_t get_DRM_system;
+	drmaa_get_DRMAA_implementation_function_t get_DRMAA_implementation;
+} fsd_drmaa_api_t;
+
+
+int main(int argc, char **argv) {
 	char *drmaa_path = getenv(DRMAA_PATH);
-    void *handle = NULL;
+	void *handle = NULL;
 	char *command = NULL;
 	char **command_args = NULL;
 	char working_directory[1024] = ".";
-    drmaa_job_template_t *jt = NULL;
-    char errbuf[DRMAA_ERROR_STRING_BUFFER] = "";
-    char stdout_name[1048] = "stdout";
-    char stderr_name[1048] = "stderr";
-    char jobid[DRMAA_JOBNAME_BUFFER] = "";
+	drmaa_job_template_t *jt = NULL;
+	char errbuf[DRMAA_ERROR_STRING_BUFFER] = "";
+	char stdin_name[1048] = "";
+	char stdout_name[1048] = "";
+	char stderr_name[1048] = "";
+	char jobid[DRMAA_JOBNAME_BUFFER] = "";
+	fsd_drmaa_api_t api;
+	int status = -1;
 
 	printf("DRMAA run (DRMAA_PATH=%s)\n", drmaa_path);
 
-	if (!drmaa_path)
-	{
+	if (!drmaa_path) {
 		fprintf(stderr, DRMAA_PATH " not set!\n");
 		exit(1);
 	}
 
-	if (argc <= 1)
-	{
+	if (argc <= 1) {
 		fprintf(stderr, "Insufficient number of arguments \n");
 		exit(1);
 	}
 
-    handle = dlopen(drmaa_path, RTLD_NOW | RTLD_GLOBAL);
+	handle = dlopen(drmaa_path, RTLD_NOW | RTLD_LOCAL);
 
-    if (!handle)
-    {
-        const char *msg = dlerror();
+	if (!handle) {
+		const char *msg = dlerror();
 
 		if (!msg)
-			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)", msg, drmaa_path);
+			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)",
+					msg, drmaa_path);
 		else
 			fprintf(stderr, "Could not load DRMAA library: %s", drmaa_path);
 
 		exit(1);
-    }
+	}
 
-    assert(drmaa_allocate_job_template(&jt, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
+	if ((api.init = (drmaa_init_function_t)dlsym(handle, "drmaa_init")) == 0) goto fault;
+	if ((api.exit = (drmaa_exit_function_t)dlsym(handle, "drmaa_exit")) == 0) goto fault;
+	if ((api.allocate_job_template = (drmaa_allocate_job_template_function_t)dlsym(handle, "drmaa_allocate_job_template")) == 0) goto fault;
+	if ((api.delete_job_template = (drmaa_delete_job_template_function_t)dlsym(handle, "drmaa_delete_job_template")) == 0) goto fault;
+	if ((api.set_attribute = (drmaa_set_attribute_function_t)dlsym(handle, "drmaa_set_attribute")) == 0) goto fault;
+	if ((api.get_attribute = (drmaa_get_attribute_function_t)dlsym(handle, "drmaa_get_attribute")) == 0) goto fault;
+	if ((api.set_vector_attribute = (drmaa_set_vector_attribute_function_t)dlsym(handle, "drmaa_set_vector_attribute")) == 0) goto fault;
+	if ((api.get_vector_attribute = (drmaa_get_vector_attribute_function_t)dlsym(handle, "drmaa_get_vector_attribute")) == 0) goto fault;
+	if ((api.run_job = (drmaa_run_job_function_t)dlsym(handle, "drmaa_run_job")) == 0) goto fault;
+	if ((api.control = (drmaa_control_function_t)dlsym(handle, "drmaa_control")) == 0) goto fault;
+	if ((api.job_ps = (drmaa_job_ps_function_t)dlsym(handle, "drmaa_job_ps")) == 0) goto fault;
+	if ((api.wait = (drmaa_wait_function_t)dlsym(handle, "drmaa_wait")) == 0) goto fault;
+	if ((api.wifexited = (drmaa_wifexited_function_t)dlsym(handle, "drmaa_wifexited")) == 0) goto fault;
+	if ((api.wexitstatus = (drmaa_wexitstatus_function_t)dlsym(handle, "drmaa_wexitstatus")) == 0) goto fault;
+	if ((api.wifsignaled = (drmaa_wifsignaled_function_t)dlsym(handle, "drmaa_wifsignaled")) == 0) goto fault;
+	if ((api.wtermsig = (drmaa_wtermsig_function_t)dlsym(handle, "drmaa_wtermsig")) == 0) goto fault;
+	if ((api.wcoredump = (drmaa_wcoredump_function_t)dlsym(handle, "drmaa_wcoredump")) == 0) goto fault;
+	if ((api.wifaborted = (drmaa_wifaborted_function_t)dlsym(handle, "drmaa_wifaborted")) == 0) goto fault;
+	if ((api.strerror = (drmaa_strerror_function_t)dlsym(handle, "drmaa_strerror")) == 0) goto fault;
+	if ((api.get_contact = (drmaa_get_contact_function_t)dlsym(handle, "drmaa_get_contact")) == 0) goto fault;
+	if ((api.version = (drmaa_version_function_t)dlsym(handle, "drmaa_version")) == 0) goto fault;
+	if ((api.get_DRM_system = (drmaa_get_DRM_system_function_t)dlsym(handle, "drmaa_get_DRM_system")) == 0) goto fault;
+	if ((api.get_DRMAA_implementation = (drmaa_get_DRMAA_implementation_function_t)dlsym(handle, "drmaa_get_DRMAA_implementation")) == 0) goto fault;
+
+	if ((api.init(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+
+	if ((api.allocate_job_template(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 	/*  command */
-    command = argv[1];
+	command = argv[1];
 
-    assert(drmaa_set_attribute(jt, DRMAA_REMOTE_COMMAND, command, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
+	if ((api.set_attribute(jt, DRMAA_REMOTE_COMMAND, command, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 	/*  args */
-    if (argc > 2)
-    {
-    	char **args_vector = NULL;
-    	int i;
+	if (argc > 2) {
+		char **args_vector = NULL;
+		int i;
 
-    	command_args = &(argv[2]);
-    	argc-=2;
+		command_args = &(argv[2]);
+		argc -= 2;
 
-    	args_vector = calloc(argc + 1, sizeof(char *));
-    	/* TODO: check */
+		args_vector = calloc(argc + 1, sizeof(char *));
+		/* TODO: check */
 
-    	for (i=0; i < argc; i++)
-    	{
-    		args_vector[i] = command_args[i];
-    	}
+		for (i = 0; i < argc; i++) {
+			args_vector[i] = command_args[i];
+		}
 
-        assert(drmaa_set_vector_attribute(jt, DRMAA_V_ARGV, (const char **)args_vector, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
-    }
+		if ((api.set_vector_attribute(jt, DRMAA_V_ARGV, (const char **) args_vector, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+	}
 
 	/*  environment */
-    {
-    	int i = 0;
+	{
+		int i = 0;
 
-    	while (environ[i]) {
-    		printf("environ[%d]=%s\n", i, environ[i]);
-    	}
+		while (environ[i]) {
+			i++;
+		}
 
-        assert(drmaa_set_vector_attribute(jt, DRMAA_V_ENV, (const char **)environ, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
-    }
-
+		if ((api.set_vector_attribute(jt, DRMAA_V_ENV, (const char **) environ, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+	}
 
 	/*  working directory */
-    assert( getcwd(working_directory, sizeof(working_directory)) );
-    assert( drmaa_set_attribute(jt, DRMAA_WD, working_directory, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
+	getcwd(working_directory, sizeof(working_directory));
+	if ((api.set_attribute(jt, DRMAA_WD, working_directory, errbuf,	sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
-    /* read stdin */
+
+
 
 	/* stdout.PID stderr.PID */
-    sprintf(stdout_name, ":%s/stdout.%u", working_directory, (unsigned int)getpid());
-    sprintf(stderr_name, ":%s/stderr.%u", working_directory, (unsigned int)getpid());
+	sprintf(stdin_name, ":%s/.stdin.%u", working_directory, (unsigned int) getpid());
+	sprintf(stdout_name, ":%s/.stdout.%u", working_directory, (unsigned int) getpid());
+	sprintf(stderr_name, ":%s/.stderr.%u", working_directory, (unsigned int) getpid());
 
-    assert( drmaa_set_attribute(jt, DRMAA_OUTPUT_PATH, stdout_name, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
-    assert( drmaa_set_attribute(jt, DRMAA_ERROR_PATH, stderr_name, errbuf, sizeof(errbuf) - 1) == DRMAA_ERRNO_SUCCESS);
 
-    /* run */
-    if (drmaa_run_job(jobid, sizeof(jobid) - 1, jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)
-    {
+	/* read stdin */
+	if (! isatty(0)) {
+		int fd = -1;
+		char buf[1024] = "";
+		int bread = -1;
+
+		if ((fd = open(stdin_name + 1, O_WRONLY | O_EXCL | O_CREAT, 0600)) < 0) {
+			perror("open failed:");
+			exit(3);
+		}
+
+		while ((bread = read(0, buf, sizeof(buf))) > 0 ) {
+			write(fd, buf, bread);
+		}
+
+		close(fd);
+
+		if (api.set_attribute(jt, DRMAA_INPUT_PATH, stdin_name, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)
+			goto fault;
+	}
+
+	if (api.set_attribute(jt, DRMAA_OUTPUT_PATH, stdout_name, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) goto fault;
+	if (api.set_attribute(jt, DRMAA_ERROR_PATH, stderr_name, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) goto fault;
+
+	/* run */
+	if (api.run_job(jobid, sizeof(jobid) - 1, jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
 		fprintf(stderr, "Failed to submit a job: %s \n", errbuf);
 		exit(2);
-    }
+	}
 
 	/* wait */
 
+	if (api.wait(jobid, NULL, 0, &status, DRMAA_TIMEOUT_WAIT_FOREVER, NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
+		fprintf(stderr, "Failed to wait for a job %s: %s \n", jobid, errbuf);
+		exit(132);
+	}
+
 	/*  print stdout and stderr */
+	{
+		char buf[1024] = "";
+		struct stat stat_buf;
+		int breads;
 
-	/* 7 - exit */
+		if (stat(stdout_name + 1, &stat_buf) == -1) {
+			fprintf(stderr, "Failed to get stdout (%s) of job %s\n", stdout_name + 1, jobid);
+		} else {
+			int fd = open(stdout_name + 1, O_RDONLY);
+
+			if (fd < 0) { perror("open failed"); exit(3); }
+
+			while ((breads = read(fd, buf, sizeof(buf))) > 0) {
+				write(1, buf, breads);
+			}
+
+			close(fd);
+
+			unlink(stdout_name + 1);
+		}
+
+		if (stat(stderr_name + 1, & stat_buf) == -1) {
+			fprintf(stderr, "Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid);
+		} else {
+			int fd = open(stderr_name + 1, O_RDONLY);
+
+			if (fd < 0) { perror("open failed"); exit(3); }
+
+			while ((breads = read(fd, buf, sizeof(buf))) > 0) {
+				write(2, buf, breads);
+			}
+
+			close(fd);
+
+			unlink(stderr_name + 1);
+		}
+
+	}
+
+	if (strlen(stdin) != 0) {
+		unlink(stdin + 1);
+	}
+
+	/* exit with appropriate code */
+	{
+		int exited = 0;
+		int signaled = 0;
+		int exit_status = 1;
 
 
-    return 0;
+		if (api.wifexited(&exited, status, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
+			goto fault;
+		}
+
+		if (api.wifsignaled(&signaled, status, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
+			goto fault;
+		}
+
+		if (exited) {
+			(void) api.wexitstatus(&exit_status, status, errbuf, sizeof(errbuf) - 1);
+		} else {
+			if (signaled) {
+				exit_status = 128;
+			} else {
+				exit_status = 1;
+			}
+		}
+
+		api.exit(errbuf, sizeof(errbuf) - 1);
+		exit(exit_status);
+	}
+fault:
+
+	return 0;
 }

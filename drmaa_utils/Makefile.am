@@ -80,10 +80,11 @@ drmaa_attrib.c: drmaa_attrib.gperf
 timedelta.c: timedelta.rl
 	$(RAGEL) $(RAGELFLAGS) -o timedelta.c timedelta.rl
 	
-bin_PROGRAMS = drmaa-run 
+bin_PROGRAMS = drmaa-run  hpc-bash
 
 drmaa_run_SOURCES = drmaa_run.c
-drmaa_run_LDFLAGS = -module
+drmaa_run_LDFLAGS = -ldl
 
+hpc_bash_SOURCES = hpc_bash.c 
 
 
