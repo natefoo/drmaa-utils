@@ -244,9 +244,17 @@ int main(int argc, char **argv) {
 		char buf[1024] = "";
 		struct stat stat_buf;
 		int breads;
+		int tries_count = 0;
 
+retry1:
 		if (stat(stdout_name + 1, &stat_buf) == -1) {
-			fprintf(stderr, "Failed to get stdout (%s) of job %s\n", stdout_name + 1, jobid);
+			if (tries_count > 3)
+				fprintf(stderr, "Failed to get stdout (%s) of job %s\n", stdout_name + 1, jobid);
+			else {
+				sleep(3);
+				tries_count++;
+				goto retry1;
+			}
 		} else {
 			int fd = open(stdout_name + 1, O_RDONLY);
 
@@ -260,9 +268,15 @@ int main(int argc, char **argv) {
 
 			unlink(stdout_name + 1);
 		}
-
+retry2:
 		if (stat(stderr_name + 1, & stat_buf) == -1) {
-			fprintf(stderr, "Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid);
+			if (tries_count > 3)
+				fprintf(stderr, "Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid);
+			else {
+				sleep(3);
+				tries_count++;
+				goto retry2;
+			}
 		} else {
 			int fd = open(stderr_name + 1, O_RDONLY);
 

@@ -20,13 +20,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #define HPC_BASH_EXIT_OK (0)
 #define HPC_BASH_EXIT_ERROR (5)
+#define HPC_BASH_SCRIPT_NAME_TEMPLATE "/tmp/hpc-bash.XXXXXX"
 
-static const char *translate_hpc_bash_script(const char *orginal_script_name);
+typedef struct hpc_batch_job_s {
+	char *walltime;
+	char *native;
+} hpc_batch_job_t;
+
+static char *translate_hpc_bash_script(const char *orginal_script_name);
 
 int main(int argc, char **argv)
 {
@@ -42,6 +51,7 @@ int main(int argc, char **argv)
 		exit(HPC_BASH_EXIT_ERROR);
 	}
 
+
 	if ((child_pid = fork()) > 0) {
 		int status = -1;
 
@@ -52,7 +62,7 @@ int main(int argc, char **argv)
 		}
 
 		/* remove temporary script file */
-		unlink(tmp_script_file_name);
+		/*unlink(tmp_script_file_name);*/
 
 		if (WIFEXITED(status)) {
 			exit(WEXITSTATUS(status));
@@ -69,7 +79,7 @@ int main(int argc, char **argv)
 		/*shift arguments by one */
 		argv++;
 		argc--;
-		execv(tmp_scrpt_file_name, argv);
+		execv(tmp_script_file_name, argv);
 		perror("execv() failed");
 		exit(127);
 	} else {
@@ -79,18 +89,43 @@ int main(int argc, char **argv)
 	return 1;
 }
 
+#define WRITE_STR2(str,length) \
+	do { \
+		if (write(out_fd, str, length) != length) { \
+			perror("write() failed"); \
+			goto out; \
+		} \
+	} while (0)
+
+#define WRITE_STR(str) \
+	do { \
+		WRITE_STR2(str, strlen(str)); \
+	} while (0)
+
 char *
 translate_hpc_bash_script(const char *orginal_script_name)
 {
-	char script_template[32] = ".hpc-bash.XXXXXX";
+	char script_template[32] = HPC_BASH_SCRIPT_NAME_TEMPLATE;
 	char *tmp_script_file = NULL;
 	char line_buf[1024] = "";
 	int out_fd = -1;
 	int line_counter = 1;
+	bool in_for_loop = false;
+	bool in_batch_job = false;
+	bool after_done = false;
 	FILE *in_file = NULL;
+	hpc_batch_job_t batch_job;
 
+	memset(&batch_job, 0, sizeof(batch_job));
+
+	/** TODO use RAGEL !!! **/
 	if ((out_fd = mkstemp(script_template)) == -1) {
 		perror("mkstemp() failed");
+		goto out;
+	}
+
+	if ((fchmod(out_fd, S_IXUSR | S_IRUSR | S_IWUSR)) == -1 ) {
+		perror("fchmod() failed");
 		goto out;
 	}
 
@@ -101,10 +136,49 @@ translate_hpc_bash_script(const char *orginal_script_name)
 
 	while (fgets(line_buf, sizeof(line_buf), in_file) != NULL) {
 		int line_length = strlen(line_buf);
-		if (line_length > 0 && line_length[line_length - 1] != '\n')
-			fprintf("line %d: line to long", line_counter);
-	}
 
+		if (line_length > 0 && line_buf[line_length - 1] != '\n') {
+			fprintf(stderr, "line %d: line to long or no NEW line at the end of gile", line_counter);
+			goto out;
+		}
+
+		if (line_counter == 1) {
+			if (strstr(line_buf, "hpc-bash"))
+				WRITE_STR("#!/bin/bash\n");
+			else {
+				fprintf(stderr,"WARNING: no hpc-bash shebang found!");
+				WRITE_STR2(line_buf, line_length);
+			}
+		} else if (strstr(line_buf, "#pragma hpc-bash parallel for")) {
+			in_for_loop = true;
+		} else if (strstr(line_buf, "#pragma hpc-bash batch-job")){
+			in_batch_job = true;
+		} else {
+			if (in_batch_job) {
+				WRITE_STR("\tdrmaa-run ");
+				in_batch_job = false;
+			}
+
+			if (in_for_loop && strstr(line_buf,"done")) {
+				WRITE_STR("\t}&\n");
+				in_for_loop = false;
+				after_done = true;
+			}
+
+			WRITE_STR2(line_buf, line_length);
+
+			if (after_done) {
+				WRITE_STR("wait\n");
+				after_done = false;
+			}
+
+			if (in_for_loop && strstr(line_buf,"do")) {
+				WRITE_STR("\t{\n");
+			}
+		}
+
+		line_counter++;
+	}
 
 	tmp_script_file = strdup(script_template);
 out:
@@ -118,5 +192,8 @@ out:
 		in_file = NULL;
 	}
 
-	return tmp_scrip_file;
+	if (!tmp_script_file) /* on fault delete partially generated file */
+		unlink(script_template);
+
+	return tmp_script_file;
 }
