@@ -21,7 +21,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -101,8 +101,6 @@ int main(int argc, char **argv) {
 	fsd_drmaa_api_t api;
 	int status = -1;
 
-	printf("DRMAA run (DRMAA_PATH=%s)\n", drmaa_path);
-
 	if (!drmaa_path) {
 		fprintf(stderr, DRMAA_PATH " not set!\n");
 		exit(1);
@@ -119,10 +117,10 @@ int main(int argc, char **argv) {
 		const char *msg = dlerror();
 
 		if (!msg)
-			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)",
+			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)\n",
 					msg, drmaa_path);
 		else
-			fprintf(stderr, "Could not load DRMAA library: %s", drmaa_path);
+			fprintf(stderr, "Could not load DRMAA library: %s\n", drmaa_path);
 
 		exit(1);
 	}
@@ -151,7 +149,7 @@ int main(int argc, char **argv) {
 	if ((api.get_DRM_system = (drmaa_get_DRM_system_function_t)dlsym(handle, "drmaa_get_DRM_system")) == 0) goto fault;
 	if ((api.get_DRMAA_implementation = (drmaa_get_DRMAA_implementation_function_t)dlsym(handle, "drmaa_get_DRMAA_implementation")) == 0) goto fault;
 
-	if ((api.init(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+	if ((api.init(NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 	if ((api.allocate_job_template(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
@@ -246,6 +244,8 @@ int main(int argc, char **argv) {
 		int breads;
 		int tries_count = 0;
 
+
+		fprintf(stderr, "opening stdout file:%s\n", stdout_name);
 retry1:
 		if (stat(stdout_name + 1, &stat_buf) == -1) {
 			if (tries_count > 3)
@@ -260,6 +260,7 @@ retry1:
 
 			if (fd < 0) { perror("open failed"); exit(3); }
 
+			fprintf(stderr, "opened stdout file:%s\n", stdout_name);
 			while ((breads = read(fd, buf, sizeof(buf))) > 0) {
 				write(1, buf, breads);
 			}
@@ -293,8 +294,8 @@ retry2:
 
 	}
 
-	if (strlen(stdin) != 0) {
-		unlink(stdin + 1);
+	if (strlen(stdin_name) != 0) {
+		unlink(stdin_name + 1);
 	}
 
 	/* exit with appropriate code */

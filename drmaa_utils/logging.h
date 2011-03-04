@@ -73,7 +73,6 @@ void fsd_log_fmtv( int level, const char *fmt, va_list args );
 
 void fsd_log_stacktrace( int skip, int limit );
 
-
 /**
  * Specify place where log messages shall be written.
  * By default they are written to standard error stream (2).
@@ -93,8 +92,7 @@ typedef enum {
 	FSD_LOG_NONE
 } fsd_verbose_level_t;
 
-void
-fsd_set_verbosity_level( fsd_verbose_level_t level );
+void fsd_set_verbosity_level( fsd_verbose_level_t level );
 
 extern fsd_verbose_level_t fsd_verbose_level;
 

@@ -197,7 +197,7 @@ fsd_drmaa_session_new( const char *contact )
 		self->contact = NULL;
 		self->jobs = NULL;
 		self->configuration = NULL;
-		self->pool_delay.tv_sec = 5;
+		self->pool_delay.tv_sec = 10;
 		self->pool_delay.tv_nsec = 0;
 		self->cache_job_state = 0;
 		self->enable_wait_thread = true;
@@ -212,6 +212,7 @@ fsd_drmaa_session_new( const char *contact )
 		fsd_mutex_init( &self->drm_connection_mutex );
 		self->jobs = fsd_job_set_new();
 		self->contact = fsd_strdup( contact );
+		
 	 }
 	EXCEPT_DEFAULT
 	 {
@@ -862,11 +863,11 @@ fsd_drmaa_session_load_configuration(
 		const char *envvalue;
 		char *i;
 
-		system_conf = fsd_asprintf( "/etc/%s.conf", basename );
+		system_conf = fsd_asprintf( DRMAA_DIR_SYSCONF"/%s.conf", basename );
 
 		home = getenv( "HOME" );
 		if( home == NULL )
-		 { home = ""; }
+		 { home = "."; }
 		user_conf = fsd_asprintf( "%s/.%s.conf", home, basename );
 
 		varname = fsd_asprintf( "%s_CONF", basename );

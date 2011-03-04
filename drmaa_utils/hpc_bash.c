@@ -26,6 +26,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifdef HAVE_CONFIG_H
+#       include <config.h>
+#endif
+
 #define HPC_BASH_EXIT_OK (0)
 #define HPC_BASH_EXIT_ERROR (5)
 #define HPC_BASH_SCRIPT_NAME_TEMPLATE "/tmp/hpc-bash.XXXXXX"
@@ -69,7 +73,7 @@ int main(int argc, char **argv)
 		} else if (WIFSIGNALED(status)) {
 			exit(128 + WTERMSIG(status));
 		} else {
-			fprintf(stderr, "Ilegall wait staus = %d\n", status);
+			fprintf(stderr, "Ilegall wait status = %d\n", status);
 			exit(HPC_BASH_EXIT_ERROR);
 		}
 
@@ -138,7 +142,7 @@ translate_hpc_bash_script(const char *orginal_script_name)
 		int line_length = strlen(line_buf);
 
 		if (line_length > 0 && line_buf[line_length - 1] != '\n') {
-			fprintf(stderr, "line %d: line to long or no NEW line at the end of gile", line_counter);
+			fprintf(stderr, "line %d: line to long or no NEW line at the end of file", line_counter);
 			goto out;
 		}
 
@@ -155,7 +159,7 @@ translate_hpc_bash_script(const char *orginal_script_name)
 			in_batch_job = true;
 		} else {
 			if (in_batch_job) {
-				WRITE_STR("\tdrmaa-run ");
+				WRITE_STR("\t" DRMAA_DIR_BIN "/drmaa-run ");
 				in_batch_job = false;
 			}
 

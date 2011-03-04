@@ -52,12 +52,13 @@ fsd_verbose_level_t fsd_verbose_level =
 #ifdef DEBUGGING
 	FSD_LOG_TRACE
 #else
-	FSD_LOG_WARNING
+	FSD_LOG_FATAL
 #endif
 ;
 
 static struct timeval fsd_logging_start = {0, 0};
 
+static void fsd_log_check_verbosity( void );
 
 void
 fsd_set_verbosity_level( fsd_verbose_level_t level )
@@ -139,13 +140,18 @@ _fsd_log( int level, const char *file, const char *function,
 		time_t t;
 		struct tm utc;
 		char rep[32];
+		fsd_log_check_verbosity();
+
 		fsd_logging_start.tv_sec = seconds;
 		fsd_logging_start.tv_usec = microseconds;
 		t = seconds;
 		gmtime_r( &t, &utc );
 		strftime( rep, sizeof(rep), "%Y-%m-%d %H:%M:%S", &utc );
-		fsd_log_debug(( "logging started at: %s.%02ld Z",
-					rep, microseconds/10000 ));
+		fsd_log_info(( "logging started at: %s.%02ld Z", rep, microseconds/10000 ));
+		/* recheck */
+		if( level < (int)fsd_verbose_level )
+                	return;
+
 	 }
 	if( microseconds < fsd_logging_start.tv_usec )
 	 {
@@ -195,6 +201,46 @@ _fsd_log( int level, const char *file, const char *function,
 	} while( *p != '\0' );
 
 	free( message );
+}
+
+
+void 
+fsd_log_check_verbosity( void )
+{
+	const char *log_level_str = getenv("DRMAA_LOG_LEVEL");
+
+	if (log_level_str == NULL) 
+	 {
+		return;
+	 } 
+	else if (strcmp(log_level_str, "TRACE") == 0) 
+	 {
+		fsd_verbose_level = FSD_LOG_TRACE;
+	 } 
+	else if (strcmp(log_level_str, "DEBUG") == 0) 
+	 {
+		fsd_verbose_level = FSD_LOG_DEBUG;
+	 } 
+	else if (strcmp(log_level_str, "INFO") == 0) 
+	 {
+		fsd_verbose_level = FSD_LOG_INFO;
+	 } 
+	else if (strcmp(log_level_str, "WARNING") == 0) 
+	 {
+		fsd_verbose_level = FSD_LOG_WARNING;
+	 } 
+	else if (strcmp(log_level_str, "ERROR") == 0) 
+	 {
+		fsd_verbose_level = FSD_LOG_ERROR;
+	 } 
+	else if (strcmp(log_level_str, "FATAL") == 0) 
+	 {
+		fsd_verbose_level = FSD_LOG_FATAL;
+	 } 
+	else 
+	 {
+		fsd_log_error(( "Illegal value of DRMAA_LOG_LEVEL=%s. Using default logging verbosity.", log_level_str));
+	 } 
 }
 
 

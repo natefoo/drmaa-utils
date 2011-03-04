@@ -56,6 +56,13 @@ AC_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 
+AC_ARG_VAR([SED], [Location of the sed utility])
+AC_PATH_PROG(SED, [sed])
+AC_SUBST([SED])
+
+AC_ARG_VAR([TR], [Location of the tr utility])
+AC_PATH_PROG([TR], [tr])
+
 
 # code generation tools:
 AC_PROG_YACC
@@ -189,6 +196,29 @@ if test x$GCC = xyes; then
 	fi
 	CFLAGS="-Wall -W -Wno-unused  $GCC_W_NO_FORMAT_ZERO_LENGTH  $GCC_W_NO_MISSING_FIELD_INITIALIZERS ${CFLAGS}"
 fi
+
+# put all usefull paths in config.h
+AH_TEMPLATE([DRMAA_DIR_PREFIX], [The installation prefix])
+AH_TEMPLATE([DRMAA_DIR_BIN], [Location of binary files])
+AH_TEMPLATE([DRMAA_DIR_SYSCONF], [Location of system configuration files])
+AH_TEMPLATE([DRMAA_DIR_LOCALSTATE], [Location of variable data files])
+AH_TEMPLATE([DRMAA_DIR_DATA], [Location of package data files])
+
+test "$prefix" = NONE && prefix="$ac_default_prefix"
+test "$exec_prefix" = NONE && exec_prefix='${prefix}'
+
+for i in bindir prefix localstatedir  sysconfdir datadir; do
+        name=`echo $i | $SED -e 's/dir$//' | $TR 'a-z' 'A-Z'`
+	echo "name = $name"
+        x="\$$i"
+        eval y="$x"
+        while test "$x" != "$y"; do
+                x="$y"
+                eval y="$x"
+        done
+        AC_DEFINE_UNQUOTED([DRMAA_DIR_$name], ["$x"])
+done
+
 
 AC_CONFIG_FILES([
 	Makefile

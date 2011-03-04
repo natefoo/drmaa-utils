@@ -310,7 +310,11 @@ fsd_exc_new( int code, char *message, bool own_message )
 	fsd_exc_t *exc = NULL;
 	char *volatile message_buffer = NULL;
 
-	fsd_log_error(("fsd_exc_new(%d,%s,%d)", code, message, own_message));
+	if ( code == FSD_DRMAA_ERRNO_EXIT_TIMEOUT || code == FSD_ERRNO_STOP_ITERATION ) 
+		fsd_log_debug(("fsd_exc_new(%d,%s,%d)", code, message, own_message));
+	else
+		fsd_log_error(("fsd_exc_new(%d,%s,%d)", code, message, own_message));
+
 
 	TRY
 	 {
