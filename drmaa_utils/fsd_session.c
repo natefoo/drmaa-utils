@@ -200,7 +200,7 @@ fsd_drmaa_session_new( const char *contact )
 		self->pool_delay.tv_sec = 10;
 		self->pool_delay.tv_nsec = 0;
 		self->cache_job_state = 0;
-		self->enable_wait_thread = true;
+		self->enable_wait_thread = false;
 		self->job_categories = NULL;
 		self->missing_jobs = FSD_REVEAL_MISSING_JOBS;
 		self->wait_thread_started = false;
