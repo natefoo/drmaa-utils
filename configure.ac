@@ -209,7 +209,6 @@ test "$exec_prefix" = NONE && exec_prefix='${prefix}'
 
 for i in bindir prefix localstatedir  sysconfdir datadir; do
         name=`echo $i | $SED -e 's/dir$//' | $TR 'a-z' 'A-Z'`
-	echo "name = $name"
         x="\$$i"
         eval y="$x"
         while test "$x" != "$y"; do
