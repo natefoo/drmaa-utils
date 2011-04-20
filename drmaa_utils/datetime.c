@@ -1,4 +1,4 @@
-/* $Id: datetime.c 132 2010-04-28 14:34:34Z mamonski $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems

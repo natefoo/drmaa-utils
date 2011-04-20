@@ -1,4 +1,4 @@
-/* $Id: $ */
+/* $Id$ */
 /*
  * HPC-BASH - part of the DRMAA utilities library
  * Poznan Supercomputing and Networking Center Copyright (C) 2010

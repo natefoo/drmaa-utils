@@ -42,7 +42,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: lookup3.c 232 2010-05-30 17:03:23Z mamonski $";
+	= "$Id$";
 #endif
 
 typedef uint32_t uint32;   /* unsigned 4-byte quantities */

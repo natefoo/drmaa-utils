@@ -1,4 +1,4 @@
-# $Id: Makefile.am 2248 2009-03-20 14:20:56Z lukasz $
+# $Id$
 #
 # FedStage DRMAA utilities library
 # Copyright (C) 2006-2008  FedStage Systems

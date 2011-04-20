@@ -1,4 +1,4 @@
-/* $Id: job.h 255 2010-08-05 15:53:36Z mamonski $ */
+/* $Id$ */
 /*
  * FedStage DRMAA utilities library
  * Copyright (C) 2006-2008  FedStage Systems

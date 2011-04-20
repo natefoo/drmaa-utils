@@ -1,4 +1,4 @@
-/* $Id: timedelta.rl 1452 2008-10-02 12:09:09Z lukasz $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems
@@ -30,7 +30,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: timedelta.rl 1452 2008-10-02 12:09:09Z lukasz $";
+	= "$Id$";
 #endif
 
 int

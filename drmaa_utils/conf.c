@@ -1,4 +1,4 @@
-/* $Id: conf.c 226 2010-05-25 10:47:18Z mamonski $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems
@@ -36,7 +36,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: conf.c 226 2010-05-25 10:47:18Z mamonski $";
+	= "$Id$";
 #endif
 
 

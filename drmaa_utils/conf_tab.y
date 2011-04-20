@@ -1,4 +1,4 @@
-/* $Id: conf_tab.y 2172 2009-02-28 14:26:23Z lukasz $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems

@@ -1,4 +1,4 @@
-/* $Id: datetime.h 296 2010-09-15 13:21:14Z mmatloka $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems

@@ -1,4 +1,4 @@
-# $Id: ax_gcc_warnings.m4 1542 2008-10-21 12:00:09Z lukasz $
+# $Id$
 #
 # SYNOPSIS
 #

@@ -1,4 +1,4 @@
-/* $Id: template.c 284 2010-09-13 08:39:55Z mmatloka $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems
@@ -30,7 +30,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: template.c 284 2010-09-13 08:39:55Z mmatloka $";
+	= "$Id$";
 #endif
 
 

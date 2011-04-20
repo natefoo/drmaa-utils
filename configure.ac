@@ -1,6 +1,6 @@
 AC_INIT([FedStage DRMAA utilities library], [2.0.1], [drmaa-pbspro-users@lists.fedstage.com], [drmaa_utils])
 AC_PREREQ(2.59)
-AC_REVISION([$Id: configure.ac 1673 2008-11-21 20:17:05Z lukasz $])
+AC_REVISION([$Id$])
 AC_COPYRIGHT([
 FedStage DRMAA utilities library
 Copyright (C) 2006-2008  FedStage Systems

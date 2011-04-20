@@ -1,4 +1,4 @@
-/* $Id: lookup3.h 2 2009-10-12 09:51:22Z mamonski $ */
+/* $Id$ */
 
 #ifndef __LOOKUP3_H
 #define __LOOKUP3_H

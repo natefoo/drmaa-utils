@@ -1,4 +1,4 @@
-/* $Id: $ */
+/* $Id$ */
 /*
  * HPC-BASH - part of the DRMAA utilities library
  * Poznan Supercomputing and Networking Center Copyright (C) 2010
@@ -91,6 +91,7 @@ int main(int argc, char **argv) {
 	void *handle = NULL;
 	char *command = NULL;
 	char **command_args = NULL;
+	char *native_specification = NULL;
 	char working_directory[1024] = ".";
 	drmaa_job_template_t *jt = NULL;
 	char errbuf[DRMAA_ERROR_STRING_BUFFER] = "";
@@ -117,8 +118,7 @@ int main(int argc, char **argv) {
 		const char *msg = dlerror();
 
 		if (!msg)
-			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)\n",
-					msg, drmaa_path);
+			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)\n", msg, drmaa_path);
 		else
 			fprintf(stderr, "Could not load DRMAA library: %s\n", drmaa_path);
 
@@ -152,6 +152,28 @@ int main(int argc, char **argv) {
 	if ((api.init(NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 	if ((api.allocate_job_template(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+
+	/* parse args */
+	{
+		while (argc >= 1 && argv[1][0] == '-')
+		{
+			if (strncmp(argv[1],"-native=", 8) == 0) {
+				native_specification = argv[1] + 8;
+				fprintf(stderr, "native specification = '%s'\n", native_specification);
+			} else {
+				fprintf(stderr, "Unknown option: %s \n", argv[1]);
+				exit(1);
+			}
+			argv++;
+			argc--;
+		}
+
+	}
+
+	if (argc <= 1) {
+		fprintf(stderr, "Insufficient number of arguments \n");
+		exit(1);
+	}
 
 	/*  command */
 	command = argv[1];
@@ -191,7 +213,8 @@ int main(int argc, char **argv) {
 	getcwd(working_directory, sizeof(working_directory));
 	if ((api.set_attribute(jt, DRMAA_WD, working_directory, errbuf,	sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
-
+	/* set native specification if requested */
+	if ((api.set_attribute(jt, DRMAA_NATIVE_SPECIFICATION, native_specification, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 
 	/* stdout.PID stderr.PID */

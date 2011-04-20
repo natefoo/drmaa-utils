@@ -1,5 +1,5 @@
 %{
-/* $Id: drmaa_attrib.gperf 1409 2008-09-25 08:59:45Z lukasz $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems
@@ -30,7 +30,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: drmaa_attrib.gperf 1409 2008-09-25 08:59:45Z lukasz $";
+	= "$Id$";
 #endif
 
 extern const fsd_attribute_t drmaa_attributes[];

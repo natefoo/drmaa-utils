@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: autogen.sh 1656 2008-11-18 17:11:58Z lukasz $
+# $Id$
 
 run() {
 	echo "running $@ ($PWD)"

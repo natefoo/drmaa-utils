@@ -1,4 +1,4 @@
-/* $Id: fsd_session.c 359 2010-11-02 17:47:19Z mamonski $ */
+/* $Id$ */
 /*
  * FedStage DRMAA utilities library
  * Copyright (C) 2006-2008  FedStage Systems
@@ -32,7 +32,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: fsd_session.c 359 2010-11-02 17:47:19Z mamonski $";
+	= "$Id$";
 #endif
 
 
@@ -727,7 +727,7 @@ void *
 fsd_drmaa_session_wait_thread( fsd_drmaa_session_t *self )
 {
 	struct timespec ts, *next_check = &ts;
-        bool volatile locked = false;
+	bool volatile locked = false;
 
 	fsd_log_enter(( "" ));
 	locked = fsd_mutex_lock( &self->mutex );
@@ -966,7 +966,7 @@ fsd_drmaa_session_apply_configuration( fsd_drmaa_session_t *self )
 		if( wait_thread->type == FSD_CONF_INTEGER )
 		 {
 
-			fsd_log_debug(("wait_thread=%d", wait_thread->val.integer));
+			fsd_log_info(("wait_thread=%d", wait_thread->val.integer));
 			self->enable_wait_thread = (wait_thread->val.integer != 0 );
 		 }
 		else

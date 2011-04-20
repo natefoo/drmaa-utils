@@ -1,4 +1,4 @@
-/* $Id: xmalloc.c 289 2010-09-14 14:13:17Z mmatloka $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems
@@ -45,7 +45,7 @@ static char rcsid[]
 #	ifdef __GNUC__
 		__attribute__ ((unused))
 #	endif
-	= "$Id: xmalloc.c 289 2010-09-14 14:13:17Z mmatloka $";
+	= "$Id$";
 #endif
 
 

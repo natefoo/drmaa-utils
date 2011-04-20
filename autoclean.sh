@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: autoclean.sh 1656 2008-11-18 17:11:58Z lukasz $
+# $Id$
 
 echo "Removing all generated files. ($PWD)"
 

@@ -1,4 +1,4 @@
-/* $Id: datetime_tab.y 1450 2008-10-01 22:22:59Z lukasz $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems

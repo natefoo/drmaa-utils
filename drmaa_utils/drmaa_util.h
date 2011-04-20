@@ -1,4 +1,4 @@
-/* $Id: drmaa_util.h 2 2009-10-12 09:51:22Z mamonski $ */
+/* $Id$ */
 /*
  *  FedStage DRMAA utilities library
  *  Copyright (C) 2006-2008  FedStage Systems
