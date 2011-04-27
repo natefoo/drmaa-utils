@@ -149,7 +149,7 @@ typedef struct drmaa_job_ids_s       drmaa_job_ids_t;
 #define DRMAA_ERRNO_EXIT_TIMEOUT                         23
 #define DRMAA_ERRNO_NO_RUSAGE                            24
 #define DRMAA_ERRNO_NO_MORE_ELEMENTS                     25
-
+#define DRMAA_NO_ERRNO                                   26 /* Try to be compatible with SGE drmaa.h which defines DRMAA error codes as enum */
 
 #if defined(__cplusplus)
 extern "C" {
