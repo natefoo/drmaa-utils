@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	handle = dlopen(drmaa_path, RTLD_LAZY | RTLD_LOCAL);
+	handle = dlopen(drmaa_path, RTLD_LAZY | RTLD_GLOBAL);
 
 	if (!handle) {
 		const char *msg = dlerror();
