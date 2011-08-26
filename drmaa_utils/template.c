@@ -33,6 +33,7 @@ static char rcsid[]
 	= "$Id$";
 #endif
 
+#define DRMAA_MAX_ATTR_LEN (1024)
 
 static const char*
 fsd_template_get_attr( const fsd_template_t *self, const char *name )
@@ -65,6 +66,12 @@ fsd_template_set_attr( fsd_template_t *self,
 				"invalid scalar attribute name: %s", name
 				);
 	if( value != NULL ) {
+		if (strlen (value) > DRMAA_MAX_ATTR_LEN)
+			fsd_exc_raise_fmt(
+				FSD_ERRNO_INVALID_ARGUMENT,
+				"Argument length exceeds max size: %d > %d", strlen(value), DRMAA_MAX_ATTR_LEN
+				);
+
 		if( self->attributes[ attr->code ] != NULL ) {
 			fsd_free(self->attributes[ attr->code ]);
 		}
