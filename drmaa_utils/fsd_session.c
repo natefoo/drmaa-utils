@@ -741,7 +741,7 @@ fsd_drmaa_session_wait_thread( fsd_drmaa_session_t *self )
 				
 				fsd_get_time( next_check );
 				fsd_ts_add( next_check, &self->pool_delay );
-				fsd_cond_timedwait( &self->wait_condition, &self->mutex, (const struct timespec * next_check );
+				fsd_cond_timedwait( &self->wait_condition, &self->mutex, (const struct timespec *) next_check );
 				
 			 }
 			EXCEPT_DEFAULT
