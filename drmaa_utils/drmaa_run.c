@@ -31,8 +31,7 @@
 
 extern char **environ;
 
-#define DRMAA_PATH "DRMAA_PATH"
-#define DRMAA_DEBUG "DRMAA_DEBUG"
+#define DRMAA_PATH "DRMAA_LIBRARY_PATH"
 
 typedef int (*drmaa_init_function_t)(const char *, char *, size_t );
 typedef int (*drmaa_exit_function_t)(char *, size_t );
