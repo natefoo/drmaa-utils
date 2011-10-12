@@ -33,7 +33,7 @@ static char rcsid[]
 	= "$Id$";
 #endif
 
-#define DRMAA_MAX_ATTR_LEN (1024)
+#define DRMAA_MAX_ATTR_LEN (16 * 1024 - 1)
 
 static const char*
 fsd_template_get_attr( const fsd_template_t *self, const char *name )
