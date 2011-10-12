@@ -1,7 +1,7 @@
 /* $Id$ */
 /*
  * HPC-BASH - part of the DRMAA utilities library
- * Poznan Supercomputing and Networking Center Copyright (C) 2010
+ * Poznan Supercomputing and Networking Center Copyright (C) 2011
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,21 +17,22 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
+
+#include <drmaa_utils/drmaa.h>
+#include <drmaa_utils/logging.h>
+#include <drmaa_utils/exception.h>
+#include <drmaa_utils/xmalloc.h>
+
+#include <stdlib.h>
 #include <dlfcn.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "drmaa.h"
 
-extern char **environ;
 
-#define DRMAA_PATH "DRMAA_LIBRARY_PATH"
+#define DRMAA_LIBRARY_PATH "DRMAA_LIBRARY_PATH"
 
 typedef int (*drmaa_init_function_t)(const char *, char *, size_t );
 typedef int (*drmaa_exit_function_t)(char *, size_t );
@@ -82,15 +83,189 @@ typedef struct
 	drmaa_version_function_t version;
 	drmaa_get_DRM_system_function_t get_DRM_system;
 	drmaa_get_DRMAA_implementation_function_t get_DRMAA_implementation;
+	void *handle;
 } fsd_drmaa_api_t;
 
+typedef struct
+{
+	char *native_specification;
+	char *walltime;
+	char *rusage_file;
+	bool interactive;
+	bool print_rusage;
+	char *command;
+	char **command_args;
+	int command_argc;
+} fsd_drmaa_run_opt_t;
 
-int main(int argc, char **argv) {
-	char *drmaa_path = getenv(DRMAA_PATH);
-	void *handle = NULL;
-	char *command = NULL;
-	char **command_args = NULL;
-	char *native_specification = NULL;
+
+static fsd_drmaa_api_t load_drmaa();
+static void unload_drmaa(fsd_drmaa_api_t *drmaa_api);
+
+static fsd_drmaa_run_opt_t parse_args(int argc, char **argv);
+
+static int run_and_wait(fsd_drmaa_api_t drmaa_api, fsd_drmaa_run_opt_t run_opt);
+
+int main(int argc, char **argv)
+{
+	fsd_drmaa_api_t drmaa_api;
+	fsd_drmaa_run_opt_t run_opt;
+	int status = -1;
+
+	fsd_log_enter(("(argc=%d)", argc));
+
+	TRY
+	 {
+		drmaa_api = load_drmaa();
+		run_opt = parse_args(argc,argv);
+		status = run_and_wait(drmaa_api, run_opt);
+	 }
+	EXCEPT_DEFAULT
+	 {
+		fsd_log_error(("Error"));
+	 }
+	FINALLY
+	 {
+		unload_drmaa(&drmaa_api);
+	 }
+	END_TRY
+
+	exit(status);
+}
+
+
+fsd_drmaa_api_t load_drmaa()
+{
+	fsd_drmaa_api_t api;
+	const char *path_to_drmaa = getenv(DRMAA_LIBRARY_PATH);
+
+	fsd_log_enter(("(path=%s)", path_to_drmaa));
+
+	memset(&api, 0, sizeof(api));
+
+	if (!path_to_drmaa) {
+		fsd_log_error((DRMAA_LIBRARY_PATH " env variable not set"));
+		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
+	}
+
+	api.handle = dlopen(DRMAA_LIBRARY_PATH, RTLD_LAZY | RTLD_GLOBAL);
+
+	if (!api.handle) {
+		const char *msg = dlerror();
+
+		if (!msg)
+			fsd_log_error(("Could not load DRMAA library: %s (DRMAA_LIBRARY_PATH=%s)\n", msg, DRMAA_LIBRARY_PATH));
+		else
+			fsd_log_error(("Could not load DRMAA library (DRMAA_LIBRARY_PATH=%s)\n", DRMAA_LIBRARY_PATH));
+
+		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
+	}
+
+	if ((api.init = (drmaa_init_function_t)dlsym(api.handle, "drmaa_init")) == 0)
+		goto fault;
+	if ((api.exit = (drmaa_exit_function_t)dlsym(api.handle, "drmaa_exit")) == 0)
+		goto fault;
+	if ((api.allocate_job_template = (drmaa_allocate_job_template_function_t)dlsym(api.handle, "drmaa_allocate_job_template")) == 0)
+		goto fault;
+	if ((api.delete_job_template = (drmaa_delete_job_template_function_t)dlsym(api.handle, "drmaa_delete_job_template")) == 0)
+		goto fault;
+	if ((api.set_attribute = (drmaa_set_attribute_function_t)dlsym(api.handle, "drmaa_set_attribute")) == 0)
+		goto fault;
+	if ((api.get_attribute = (drmaa_get_attribute_function_t)dlsym(api.handle, "drmaa_get_attribute")) == 0)
+		goto fault;
+	if ((api.set_vector_attribute = (drmaa_set_vector_attribute_function_t)dlsym(api.handle, "drmaa_set_vector_attribute")) == 0)
+		goto fault;
+	if ((api.get_vector_attribute = (drmaa_get_vector_attribute_function_t)dlsym(api.handle, "drmaa_get_vector_attribute")) == 0)
+		goto fault;
+	if ((api.run_job = (drmaa_run_job_function_t)dlsym(api.handle, "drmaa_run_job")) == 0)
+		goto fault;
+	if ((api.control = (drmaa_control_function_t)dlsym(api.handle, "drmaa_control")) == 0)
+		goto fault;
+	if ((api.job_ps = (drmaa_job_ps_function_t)dlsym(api.handle, "drmaa_job_ps")) == 0)
+		goto fault;
+	if ((api.wait = (drmaa_wait_function_t)dlsym(api.handle, "drmaa_wait")) == 0)
+		goto fault;
+	if ((api.wifexited = (drmaa_wifexited_function_t)dlsym(api.handle, "drmaa_wifexited")) == 0)
+		goto fault;
+	if ((api.wexitstatus = (drmaa_wexitstatus_function_t)dlsym(api.handle, "drmaa_wexitstatus")) == 0)
+		goto fault;
+	if ((api.wifsignaled = (drmaa_wifsignaled_function_t)dlsym(api.handle, "drmaa_wifsignaled")) == 0)
+		goto fault;
+	if ((api.wtermsig = (drmaa_wtermsig_function_t)dlsym(api.handle, "drmaa_wtermsig")) == 0)
+		goto fault;
+	if ((api.wcoredump = (drmaa_wcoredump_function_t)dlsym(api.handle, "drmaa_wcoredump")) == 0)
+		goto fault;
+	if ((api.wifaborted = (drmaa_wifaborted_function_t)dlsym(api.handle, "drmaa_wifaborted")) == 0)
+		goto fault;
+	if ((api.strerror = (drmaa_strerror_function_t)dlsym(api.handle, "drmaa_strerror")) == 0)
+		goto fault;
+	if ((api.get_contact = (drmaa_get_contact_function_t)dlsym(api.handle, "drmaa_get_contact")) == 0)
+		goto fault;
+	if ((api.version = (drmaa_version_function_t)dlsym(api.handle, "drmaa_version")) == 0)
+		goto fault;
+	if ((api.get_DRM_system = (drmaa_get_DRM_system_function_t)dlsym(api.handle, "drmaa_get_DRM_system")) == 0)
+		goto fault;
+	if ((api.get_DRMAA_implementation = (drmaa_get_DRMAA_implementation_function_t)dlsym(api.handle, "drmaa_get_DRMAA_implementation")) == 0)
+		goto fault;
+
+	return api;
+
+fault:
+	fsd_log_error(("Failed to dlsym DRMAA function"));
+
+	if (api.handle)
+		dlclose(api.handle);
+
+	/*make invalid */
+	memset(&api, 0, sizeof(api));
+
+	return api;
+}
+
+void unload_drmaa(fsd_drmaa_api_t *drmaa_api_handle)
+{
+	fsd_log_enter(("()"));
+
+	dlclose(drmaa_api_handle->handle);
+}
+
+static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
+{
+	fsd_drmaa_run_opt_t options;
+
+	memset(&options, 0, sizeof(options));
+
+	argv++;
+	argc--;
+
+	while (argc >= 1 && argv[1][0] == '-')
+	{
+
+		if (strncmp(argv[0],"-native=", 8) == 0) {
+			options.native_specification = argv[0] + 8;
+			fsd_log_info(("native specification = '%s'", options.native_specification));
+		} else {
+			fsd_log_error(("unknown option: %s", argv[0]));
+			exit(1); /* TODO exception */
+		}
+
+		argv++;
+		argc--;
+	}
+
+	/* TODO arg count check */
+	options.command = argv[0];
+	argv++;
+	argc--;
+
+	options.command_args = argv;
+	options.command_argc = argc;
+
+	return options;
+}
+
+int run_and_wait(fsd_drmaa_api_t api, fsd_drmaa_run_opt_t run_opt)
+{
 	char working_directory[1024] = ".";
 	drmaa_job_template_t *jt = NULL;
 	char errbuf[DRMAA_ERROR_STRING_BUFFER] = "";
@@ -98,122 +273,43 @@ int main(int argc, char **argv) {
 	char stdout_name[1048] = "";
 	char stderr_name[1048] = "";
 	char jobid[DRMAA_JOBNAME_BUFFER] = "";
-	fsd_drmaa_api_t api;
-	int status = -1;
+	int status;
 
-	if (!drmaa_path) {
-		fprintf(stderr, DRMAA_PATH " not set!\n");
-		exit(1);
-	}
+	extern char **environ;
 
-	if (argc <= 1) {
-		fprintf(stderr, "Insufficient number of arguments \n");
-		exit(1);
-	}
 
-	handle = dlopen(drmaa_path, RTLD_LAZY | RTLD_GLOBAL);
+	if ((api.init(NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS))
+		goto fault;
+	if ((api.allocate_job_template(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS))
+		goto fault;
 
-	if (!handle) {
-		const char *msg = dlerror();
 
-		if (!msg)
-			fprintf(stderr, "Could not load DRMAA library: %s (DRMAA_PATH=%s)\n", msg, drmaa_path);
-		else
-			fprintf(stderr, "Could not load DRMAA library: %s\n", drmaa_path);
-
-		exit(1);
-	}
-
-	if ((api.init = (drmaa_init_function_t)dlsym(handle, "drmaa_init")) == 0) goto fault;
-	if ((api.exit = (drmaa_exit_function_t)dlsym(handle, "drmaa_exit")) == 0) goto fault;
-	if ((api.allocate_job_template = (drmaa_allocate_job_template_function_t)dlsym(handle, "drmaa_allocate_job_template")) == 0) goto fault;
-	if ((api.delete_job_template = (drmaa_delete_job_template_function_t)dlsym(handle, "drmaa_delete_job_template")) == 0) goto fault;
-	if ((api.set_attribute = (drmaa_set_attribute_function_t)dlsym(handle, "drmaa_set_attribute")) == 0) goto fault;
-	if ((api.get_attribute = (drmaa_get_attribute_function_t)dlsym(handle, "drmaa_get_attribute")) == 0) goto fault;
-	if ((api.set_vector_attribute = (drmaa_set_vector_attribute_function_t)dlsym(handle, "drmaa_set_vector_attribute")) == 0) goto fault;
-	if ((api.get_vector_attribute = (drmaa_get_vector_attribute_function_t)dlsym(handle, "drmaa_get_vector_attribute")) == 0) goto fault;
-	if ((api.run_job = (drmaa_run_job_function_t)dlsym(handle, "drmaa_run_job")) == 0) goto fault;
-	if ((api.control = (drmaa_control_function_t)dlsym(handle, "drmaa_control")) == 0) goto fault;
-	if ((api.job_ps = (drmaa_job_ps_function_t)dlsym(handle, "drmaa_job_ps")) == 0) goto fault;
-	if ((api.wait = (drmaa_wait_function_t)dlsym(handle, "drmaa_wait")) == 0) goto fault;
-	if ((api.wifexited = (drmaa_wifexited_function_t)dlsym(handle, "drmaa_wifexited")) == 0) goto fault;
-	if ((api.wexitstatus = (drmaa_wexitstatus_function_t)dlsym(handle, "drmaa_wexitstatus")) == 0) goto fault;
-	if ((api.wifsignaled = (drmaa_wifsignaled_function_t)dlsym(handle, "drmaa_wifsignaled")) == 0) goto fault;
-	if ((api.wtermsig = (drmaa_wtermsig_function_t)dlsym(handle, "drmaa_wtermsig")) == 0) goto fault;
-	if ((api.wcoredump = (drmaa_wcoredump_function_t)dlsym(handle, "drmaa_wcoredump")) == 0) goto fault;
-	if ((api.wifaborted = (drmaa_wifaborted_function_t)dlsym(handle, "drmaa_wifaborted")) == 0) goto fault;
-	if ((api.strerror = (drmaa_strerror_function_t)dlsym(handle, "drmaa_strerror")) == 0) goto fault;
-	if ((api.get_contact = (drmaa_get_contact_function_t)dlsym(handle, "drmaa_get_contact")) == 0) goto fault;
-	if ((api.version = (drmaa_version_function_t)dlsym(handle, "drmaa_version")) == 0) goto fault;
-	if ((api.get_DRM_system = (drmaa_get_DRM_system_function_t)dlsym(handle, "drmaa_get_DRM_system")) == 0) goto fault;
-	if ((api.get_DRMAA_implementation = (drmaa_get_DRMAA_implementation_function_t)dlsym(handle, "drmaa_get_DRMAA_implementation")) == 0) goto fault;
-
-	if ((api.init(NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
-
-	if ((api.allocate_job_template(&jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
-
-	/* parse args */
-	{
-		while (argc >= 1 && argv[1][0] == '-')
-		{
-			if (strncmp(argv[1],"-native=", 8) == 0) {
-				native_specification = argv[1] + 8;
-				fprintf(stderr, "native specification = '%s'\n", native_specification);
-			} else {
-				fprintf(stderr, "Unknown option: %s \n", argv[1]);
-				exit(1);
-			}
-			argv++;
-			argc--;
-		}
-
-	}
-
-	if (argc <= 1) {
-		fprintf(stderr, "Insufficient number of arguments \n");
-		exit(1);
-	}
-
-	/*  command */
-	command = argv[1];
-
-	if ((api.set_attribute(jt, DRMAA_REMOTE_COMMAND, command, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+	if ((api.set_attribute(jt, DRMAA_REMOTE_COMMAND, run_opt.command, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 	/*  args */
-	if (argc > 2) {
+	if (run_opt.command_argc > 0) {
 		char **args_vector = NULL;
 		int i;
 
-		command_args = &(argv[2]);
-		argc -= 2;
 
-		args_vector = calloc(argc + 1, sizeof(char *));
-		/* TODO: check */
+		fsd_calloc(args_vector, run_opt.command_argc + 1, char *);
 
-		for (i = 0; i < argc; i++) {
-			args_vector[i] = command_args[i];
+		for (i = 0; i < run_opt.command_argc; i++) {
+			args_vector[i] = run_opt.command_args[i];
 		}
 
 		if ((api.set_vector_attribute(jt, DRMAA_V_ARGV, (const char **) args_vector, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 	}
 
 	/*  environment */
-	{
-		int i = 0;
-
-		while (environ[i]) {
-			i++;
-		}
-
-		if ((api.set_vector_attribute(jt, DRMAA_V_ENV, (const char **) environ, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
-	}
+	if ((api.set_vector_attribute(jt, DRMAA_V_ENV, (const char **) environ, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 	/*  working directory */
 	getcwd(working_directory, sizeof(working_directory));
+
 	if ((api.set_attribute(jt, DRMAA_WD, working_directory, errbuf,	sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
-	/* set native specification if requested */
-	if ((api.set_attribute(jt, DRMAA_NATIVE_SPECIFICATION, native_specification, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+	if (run_opt.native_specification && (api.set_attribute(jt, DRMAA_NATIVE_SPECIFICATION, run_opt.native_specification, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 
 	/* stdout.PID stderr.PID */
@@ -248,15 +344,15 @@ int main(int argc, char **argv) {
 
 	/* run */
 	if (api.run_job(jobid, sizeof(jobid) - 1, jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
-		fprintf(stderr, "Failed to submit a job: %s \n", errbuf);
-		exit(2);
+		fsd_log_error(("Failed to submit a job: %s ", errbuf));
+		exit(2); /* TODO exception */
 	}
 
 	/* wait */
 
 	if (api.wait(jobid, NULL, 0, &status, DRMAA_TIMEOUT_WAIT_FOREVER, NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
-		fprintf(stderr, "Failed to wait for a job %s: %s \n", jobid, errbuf);
-		exit(132);
+		fsd_log_error(("Failed to wait for a job %s: %s ", jobid, errbuf));
+		exit(132); /* TODO Exception */
 	}
 
 	/*  print stdout and stderr */
@@ -267,11 +363,11 @@ int main(int argc, char **argv) {
 		int tries_count = 0;
 
 
-		fprintf(stderr, "opening stdout file:%s\n", stdout_name);
+		fsd_log_info(("opening stdout file: %s", stdout_name));
 retry1:
 		if (stat(stdout_name + 1, &stat_buf) == -1) {
 			if (tries_count > 3)
-				fprintf(stderr, "Failed to get stdout (%s) of job %s\n", stdout_name + 1, jobid);
+				fsd_log_error(("Failed to get stdout (%s) of job %s", stdout_name + 1, jobid));
 			else {
 				sleep(3);
 				tries_count++;
@@ -294,7 +390,7 @@ retry1:
 retry2:
 		if (stat(stderr_name + 1, & stat_buf) == -1) {
 			if (tries_count > 3)
-				fprintf(stderr, "Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid);
+				fsd_log_error(("Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid));
 			else {
 				sleep(3);
 				tries_count++;
@@ -346,9 +442,11 @@ retry2:
 		}
 
 		api.exit(errbuf, sizeof(errbuf) - 1);
-		exit(exit_status);
+
+		return exit_status;
 	}
 fault:
-
-	return 0;
+	fsd_log_error(("Error"));
+	return 1;
 }
+

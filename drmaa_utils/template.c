@@ -25,6 +25,7 @@
 #include <drmaa_utils/template.h>
 #include <drmaa_utils/util.h>
 
+
 #ifndef lint
 static char rcsid[]
 #	ifdef __GNUC__

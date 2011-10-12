@@ -150,7 +150,7 @@ _fsd_log( int level, const char *file, const char *function,
 		fsd_log_info(( "logging started at: %s.%02ld Z", rep, microseconds/10000 ));
 		/* recheck */
 		if( level < (int)fsd_verbose_level )
-                	return;
+			return;
 
 	 }
 	if( microseconds < fsd_logging_start.tv_usec )
