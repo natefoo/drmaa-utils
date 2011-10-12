@@ -30,6 +30,7 @@
 #endif
 
 #include <time.h>
+#include <sys/time.h>
 #include <string.h>
 
 #include <drmaa_utils/common.h>
