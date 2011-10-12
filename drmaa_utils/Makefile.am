@@ -26,8 +26,7 @@ YLWRAP = $(top_srcdir)/m4/bison_ylwrap.sh
 AM_YFLAGS = -d
 
 noinst_LTLIBRARIES = libdrmaa_utils.la
-
-libdrmaa_utils_la_SOURCES = \
+COMMON_SOURCES = \
  compat.c compat.h \
  common.h \
  conf.c conf.h \
@@ -41,14 +40,17 @@ libdrmaa_utils_la_SOURCES = \
  fsd_job.c job.h \
  logging.c logging.h \
  lookup3.c lookup3.h \
- fsd_session.c session.h \
  template.c template.h \
  timedelta.c \
  thread.c thread.h \
  fsd_util.c util.h \
  drmaa_util.c drmaa_util.h \
- xmalloc.c xmalloc.h \
+ xmalloc.c xmalloc.h
+
+libdrmaa_utils_la_SOURCES = $(COMMON_SOURCES) \
+ fsd_session.c session.h \
  drmaa_base.c drmaa_base.h
+
 
 libdrmaa_utils_la_LDFLAGS = -static
 libdrmaa_utils_la_CPPFLAGS = -fPIC
@@ -82,9 +84,12 @@ timedelta.c: timedelta.rl
 	
 bin_PROGRAMS = drmaa-run  hpc-bash
 
-drmaa_run_SOURCES = drmaa_run.c
+drmaa_run_SOURCES = $(COMMON_SOURCES) \
+ drmaa_run.c
+ 
 drmaa_run_LDFLAGS = -ldl
 
-hpc_bash_SOURCES = hpc_bash.c 
+hpc_bash_SOURCES = $(COMMON_SOURCES) \
+ hpc_bash.c
 
 

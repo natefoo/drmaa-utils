@@ -711,8 +711,7 @@ fsd_drmaa_session_wait_for_job_status_change(
 		next_check = (struct timespec*)timeout;
 	fsd_log_debug(( "wait_for_job_status_change: waiting untill %ld.%09ld",
 				next_check->tv_sec, next_check->tv_nsec ));
-	status_changed = fsd_cond_timedwait(
-			wait_condition, mutex, next_check );
+	status_changed = fsd_cond_timedwait(wait_condition, mutex,(const struct timespec *) next_check );
 	if( !status_changed  &&  next_check == timeout )
 		fsd_exc_raise_code( FSD_DRMAA_ERRNO_EXIT_TIMEOUT );
 
