@@ -148,15 +148,15 @@ fsd_drmaa_api_t load_drmaa()
 		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
 	}
 
-	api.handle = dlopen(DRMAA_LIBRARY_PATH, RTLD_LAZY | RTLD_GLOBAL);
+	api.handle = dlopen(path_to_drmaa, RTLD_LAZY | RTLD_GLOBAL);
 
 	if (!api.handle) {
 		const char *msg = dlerror();
 
 		if (!msg)
-			fsd_log_error(("Could not load DRMAA library: %s (DRMAA_LIBRARY_PATH=%s)\n", msg, DRMAA_LIBRARY_PATH));
+			fsd_log_error(("Could not load DRMAA library: %s (DRMAA_LIBRARY_PATH=%s)\n", msg, path_to_drmaa));
 		else
-			fsd_log_error(("Could not load DRMAA library (DRMAA_LIBRARY_PATH=%s)\n", DRMAA_LIBRARY_PATH));
+			fsd_log_error(("Could not load DRMAA library (DRMAA_LIBRARY_PATH=%s)\n", path_to_drmaa));
 
 		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
 	}
@@ -225,8 +225,9 @@ fault:
 void unload_drmaa(fsd_drmaa_api_t *drmaa_api_handle)
 {
 	fsd_log_enter(("()"));
-
-	dlclose(drmaa_api_handle->handle);
+	
+	if (drmaa_api_handle->handle)
+		dlclose(drmaa_api_handle->handle);
 }
 
 static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
@@ -238,7 +239,7 @@ static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
 	argv++;
 	argc--;
 
-	while (argc >= 1 && argv[1][0] == '-')
+	while (argc >= 0 && argv[0][0] == '-')
 	{
 
 		if (strncmp(argv[0],"-native=", 8) == 0) {
