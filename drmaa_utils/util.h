@@ -32,6 +32,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#include <stdio.h>
 
 #include <drmaa_utils/common.h>
 #include <drmaa_utils/compat.h>
@@ -153,5 +154,12 @@ fsd_getcwd(void);
  */
 const char *
 fsd_strsignal( int signum );
+
+/**
+ * Gets next line from the file
+ * @return  The next line of the file (dynamically allocated)
+ *   or \c NULL on EOF.
+ */
+char * fsd_readline(FILE *f);
 
 #endif /* __DRMAA_UTILS__UTIL_H */

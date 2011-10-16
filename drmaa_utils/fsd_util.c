@@ -576,6 +576,61 @@ fsd_getcwd(void)
 	return result;
 }
 
+char *
+fsd_readline(FILE *f)
+{
+	char* volatile buffer = NULL;
+	char* volatile result = NULL;
+	size_t size = 1024;
+	int ch = '\0';
+	int index = 0;
+
+	TRY
+	 {
+		fsd_calloc( buffer, size + 1, char );
+		while( (ch = getc(f)) != EOF) /* getc is buffered internally */
+		 {
+			if (ch == '\n')
+				break;
+
+			if( index >= size )
+			 {
+				size *= 2;
+				fsd_realloc( buffer, size + 1, char );
+			 }
+
+			buffer[index++] = (char)ch;
+		 }
+
+		if ( (ch == '\n') /* end of line */ || (ch == EOF && !errno) /* true EOF */)
+		 {
+			if (index == 0)
+			 {
+				result = NULL; /*nothing read = return NULL */
+			 }
+			else
+			 {
+				buffer[index]= '\0'; /* just in case - calloc memset to 0 */
+				result = fsd_strdup(buffer);
+			 }
+		 }
+		else if (ch == EOF && errno)
+		 {
+			fsd_exc_raise_sys( 0 );
+		 }
+		else
+		 {
+			fsd_assert(0); /*not reached */
+		 }
+
+	 }
+	FINALLY
+	 { fsd_free( buffer ); }
+	END_TRY
+
+	return result;
+}
+
 
 const char *
 fsd_strsignal( int signum )
