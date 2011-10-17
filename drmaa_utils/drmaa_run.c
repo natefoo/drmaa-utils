@@ -122,7 +122,7 @@ int main(int argc, char **argv)
 	 }
 	EXCEPT_DEFAULT
 	 {
-		fsd_log_error(("Error"));
+		fsd_log_fatal(("Error"));
 	 }
 	FINALLY
 	 {
@@ -144,8 +144,7 @@ fsd_drmaa_api_t load_drmaa()
 	memset(&api, 0, sizeof(api));
 
 	if (!path_to_drmaa) {
-		fsd_log_error((DRMAA_LIBRARY_PATH " env variable not set"));
-		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
+		path_to_drmaa = DRMAA_DIR_PREFIX"/lib/libdrmaa.so";
 	}
 
 	api.handle = dlopen(path_to_drmaa, RTLD_LAZY | RTLD_GLOBAL);
@@ -154,9 +153,9 @@ fsd_drmaa_api_t load_drmaa()
 		const char *msg = dlerror();
 
 		if (!msg)
-			fsd_log_error(("Could not load DRMAA library: %s (DRMAA_LIBRARY_PATH=%s)\n", msg, path_to_drmaa));
+			fsd_log_fatal(("Could not load DRMAA library: %s (DRMAA_LIBRARY_PATH=%s)\n", msg, path_to_drmaa));
 		else
-			fsd_log_error(("Could not load DRMAA library (DRMAA_LIBRARY_PATH=%s)\n", path_to_drmaa));
+			fsd_log_fatal(("Could not load DRMAA library (DRMAA_LIBRARY_PATH=%s)\n", path_to_drmaa));
 
 		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
 	}
@@ -211,7 +210,7 @@ fsd_drmaa_api_t load_drmaa()
 	return api;
 
 fault:
-	fsd_log_error(("Failed to dlsym DRMAA function"));
+	fsd_log_fatal(("Failed to dlsym DRMAA function"));
 
 	if (api.handle)
 		dlclose(api.handle);
@@ -246,7 +245,7 @@ static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
 			options.native_specification = argv[0] + 8;
 			fsd_log_info(("native specification = '%s'", options.native_specification));
 		} else {
-			fsd_log_error(("unknown option: %s", argv[0]));
+			fsd_log_fatal(("unknown option: %s", argv[0]));
 			exit(1); /* TODO exception */
 		}
 
@@ -301,6 +300,8 @@ int run_and_wait(fsd_drmaa_api_t api, fsd_drmaa_run_opt_t run_opt)
 
 		if ((api.set_vector_attribute(jt, DRMAA_V_ARGV, (const char **) args_vector, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 	}
+	
+	unsetenv("module");
 
 	/*  environment */
 	if ((api.set_vector_attribute(jt, DRMAA_V_ENV, (const char **) environ, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
@@ -345,14 +346,14 @@ int run_and_wait(fsd_drmaa_api_t api, fsd_drmaa_run_opt_t run_opt)
 
 	/* run */
 	if (api.run_job(jobid, sizeof(jobid) - 1, jt, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
-		fsd_log_error(("Failed to submit a job: %s ", errbuf));
+		fsd_log_fatal(("Failed to submit a job: %s ", errbuf));
 		exit(2); /* TODO exception */
 	}
 
 	/* wait */
 
 	if (api.wait(jobid, NULL, 0, &status, DRMAA_TIMEOUT_WAIT_FOREVER, NULL, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS) {
-		fsd_log_error(("Failed to wait for a job %s: %s ", jobid, errbuf));
+		fsd_log_fatal(("Failed to wait for a job %s: %s ", jobid, errbuf));
 		exit(132); /* TODO Exception */
 	}
 
@@ -368,7 +369,7 @@ int run_and_wait(fsd_drmaa_api_t api, fsd_drmaa_run_opt_t run_opt)
 retry1:
 		if (stat(stdout_name + 1, &stat_buf) == -1) {
 			if (tries_count > 3)
-				fsd_log_error(("Failed to get stdout (%s) of job %s", stdout_name + 1, jobid));
+				fsd_log_fatal(("Failed to get stdout (%s) of job %s", stdout_name + 1, jobid));
 			else {
 				sleep(3);
 				tries_count++;
@@ -379,7 +380,8 @@ retry1:
 
 			if (fd < 0) { perror("open failed"); exit(3); }
 
-			fprintf(stderr, "opened stdout file:%s\n", stdout_name);
+			fsd_log_info(("opened stdout file:%s", stdout_name));
+
 			while ((breads = read(fd, buf, sizeof(buf))) > 0) {
 				write(1, buf, breads);
 			}
@@ -391,7 +393,7 @@ retry1:
 retry2:
 		if (stat(stderr_name + 1, & stat_buf) == -1) {
 			if (tries_count > 3)
-				fsd_log_error(("Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid));
+				fsd_log_fatal(("Failed to get stderr (%s) of job %s\n", stderr_name + 1, jobid));
 			else {
 				sleep(3);
 				tries_count++;
@@ -443,11 +445,11 @@ retry2:
 		}
 
 		api.exit(errbuf, sizeof(errbuf) - 1);
-
+		fsd_log_info(("exit_status = %d", exit_status));
 		return exit_status;
 	}
 fault:
-	fsd_log_error(("Error"));
+	fsd_log_fatal(("Error"));
 	return 1;
 }
 
