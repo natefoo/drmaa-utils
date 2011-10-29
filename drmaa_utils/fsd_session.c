@@ -408,7 +408,10 @@ fsd_drmaa_session_job_ps(
 	 {
 		job = self->get_job( self, job_id );
 		if( job == NULL )
+		 {
+			fsd_log_info(( "job_ps: recreating job object: %s", job_id ));
 			job = self->new_job( self, job_id );
+		 }
 		fsd_log_debug((" job->last_update_time = %u",  (unsigned int)job->last_update_time));
 		if( time(NULL) - job->last_update_time >= self->cache_job_state
 				|| job->state == DRMAA_PS_UNDETERMINED ) 
