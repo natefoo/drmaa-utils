@@ -588,6 +588,10 @@ fsd_readline(FILE *f)
 	TRY
 	 {
 		fsd_calloc( buffer, size + 1, char );
+
+		errno = 0; /* reset errno as getc seems not to do this 
+		and it would be inpossible to distinc between EOF and an error*/
+
 		while( (ch = getc(f)) != EOF) /* getc is buffered internally */
 		 {
 			if (ch == '\n')
