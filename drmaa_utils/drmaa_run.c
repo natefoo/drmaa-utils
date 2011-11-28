@@ -160,51 +160,51 @@ fsd_drmaa_api_t load_drmaa()
 		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
 	}
 
-	if ((api.init = (drmaa_init_function_t)dlsym(api.handle, "drmaa_init")) == 0)
+	if ((api.init = ((union {void *from; drmaa_init_function_t to;} *)dlsym(api.handle, "drmaa_init"))->to) == 0)
 		goto fault;
-	if ((api.exit = (drmaa_exit_function_t)dlsym(api.handle, "drmaa_exit")) == 0)
+	if ((api.exit = ((union {void *from; drmaa_exit_function_t to;} *)dlsym(api.handle, "drmaa_exit"))->to) == 0)
 		goto fault;
-	if ((api.allocate_job_template = (drmaa_allocate_job_template_function_t)dlsym(api.handle, "drmaa_allocate_job_template")) == 0)
+	if ((api.allocate_job_template = ((union {void *from; drmaa_allocate_job_template_function_t to;} *)dlsym(api.handle, "drmaa_allocate_job_template"))->to) == 0)
 		goto fault;
-	if ((api.delete_job_template = (drmaa_delete_job_template_function_t)dlsym(api.handle, "drmaa_delete_job_template")) == 0)
+	if ((api.delete_job_template = ((union {void *from; drmaa_delete_job_template_function_t to;} *)dlsym(api.handle, "drmaa_delete_job_template"))->to) == 0)
 		goto fault;
-	if ((api.set_attribute = (drmaa_set_attribute_function_t)dlsym(api.handle, "drmaa_set_attribute")) == 0)
+	if ((api.set_attribute = ((union {void *from; drmaa_set_attribute_function_t to;} *)dlsym(api.handle, "drmaa_set_attribute"))->to) == 0)
 		goto fault;
-	if ((api.get_attribute = (drmaa_get_attribute_function_t)dlsym(api.handle, "drmaa_get_attribute")) == 0)
+	if ((api.get_attribute = ((union {void *from; drmaa_get_attribute_function_t to;} *)dlsym(api.handle, "drmaa_get_attribute"))->to) == 0)
 		goto fault;
-	if ((api.set_vector_attribute = (drmaa_set_vector_attribute_function_t)dlsym(api.handle, "drmaa_set_vector_attribute")) == 0)
+	if ((api.set_vector_attribute = ((union {void *from; drmaa_set_vector_attribute_function_t to;} *)dlsym(api.handle, "drmaa_set_vector_attribute"))->to) == 0)
 		goto fault;
-	if ((api.get_vector_attribute = (drmaa_get_vector_attribute_function_t)dlsym(api.handle, "drmaa_get_vector_attribute")) == 0)
+	if ((api.get_vector_attribute = ((union {void *from; drmaa_get_vector_attribute_function_t to;} *)dlsym(api.handle, "drmaa_get_vector_attribute"))->to) == 0)
 		goto fault;
-	if ((api.run_job = (drmaa_run_job_function_t)dlsym(api.handle, "drmaa_run_job")) == 0)
+	if ((api.run_job = ((union {void *from; drmaa_run_job_function_t to;} *)dlsym(api.handle, "drmaa_run_job"))->to) == 0)
 		goto fault;
-	if ((api.control = (drmaa_control_function_t)dlsym(api.handle, "drmaa_control")) == 0)
+	if ((api.control = ((union {void *from; drmaa_control_function_t to;} *)dlsym(api.handle, "drmaa_control"))->to) == 0)
 		goto fault;
-	if ((api.job_ps = (drmaa_job_ps_function_t)dlsym(api.handle, "drmaa_job_ps")) == 0)
+	if ((api.job_ps = ((union {void *from; drmaa_job_ps_function_t to;} *)dlsym(api.handle, "drmaa_job_ps"))->to) == 0)
 		goto fault;
-	if ((api.wait = (drmaa_wait_function_t)dlsym(api.handle, "drmaa_wait")) == 0)
+	if ((api.wait = ((union {void *from; drmaa_wait_function_t to;} *)dlsym(api.handle, "drmaa_wait"))->to) == 0)
 		goto fault;
-	if ((api.wifexited = (drmaa_wifexited_function_t)dlsym(api.handle, "drmaa_wifexited")) == 0)
+	if ((api.wifexited = ((union {void *from; drmaa_wifexited_function_t to;} *)dlsym(api.handle, "drmaa_wifexited"))->to) == 0)
 		goto fault;
-	if ((api.wexitstatus = (drmaa_wexitstatus_function_t)dlsym(api.handle, "drmaa_wexitstatus")) == 0)
+	if ((api.wexitstatus = ((union {void *from; drmaa_wexitstatus_function_t to;} *)dlsym(api.handle, "drmaa_wexitstatus"))->to) == 0)
 		goto fault;
-	if ((api.wifsignaled = (drmaa_wifsignaled_function_t)dlsym(api.handle, "drmaa_wifsignaled")) == 0)
+	if ((api.wifsignaled = ((union {void *from; drmaa_wifsignaled_function_t to;} *)dlsym(api.handle, "drmaa_wifsignaled"))->to) == 0)
 		goto fault;
-	if ((api.wtermsig = (drmaa_wtermsig_function_t)dlsym(api.handle, "drmaa_wtermsig")) == 0)
+	if ((api.wtermsig = ((union {void *from; drmaa_wtermsig_function_t to;} *)dlsym(api.handle, "drmaa_wtermsig"))->to) == 0)
 		goto fault;
-	if ((api.wcoredump = (drmaa_wcoredump_function_t)dlsym(api.handle, "drmaa_wcoredump")) == 0)
+	if ((api.wcoredump = ((union {void *from; drmaa_wcoredump_function_t to;} *)dlsym(api.handle, "drmaa_wcoredump"))->to) == 0)
 		goto fault;
-	if ((api.wifaborted = (drmaa_wifaborted_function_t)dlsym(api.handle, "drmaa_wifaborted")) == 0)
+	if ((api.wifaborted = ((union {void *from; drmaa_wifaborted_function_t to;} *)dlsym(api.handle, "drmaa_wifaborted"))->to) == 0)
 		goto fault;
-	if ((api.strerror = (drmaa_strerror_function_t)dlsym(api.handle, "drmaa_strerror")) == 0)
+	if ((api.strerror = ((union {void *from; drmaa_strerror_function_t to;} *)dlsym(api.handle, "drmaa_strerror"))->to) == 0)
 		goto fault;
-	if ((api.get_contact = (drmaa_get_contact_function_t)dlsym(api.handle, "drmaa_get_contact")) == 0)
+	if ((api.get_contact = ((union {void *from; drmaa_get_contact_function_t to;} *)dlsym(api.handle, "drmaa_get_contact"))->to) == 0)
 		goto fault;
-	if ((api.version = (drmaa_version_function_t)dlsym(api.handle, "drmaa_version")) == 0)
+	if ((api.version = ((union {void *from; drmaa_version_function_t to;} *)dlsym(api.handle, "drmaa_version"))->to) == 0)
 		goto fault;
-	if ((api.get_DRM_system = (drmaa_get_DRM_system_function_t)dlsym(api.handle, "drmaa_get_DRM_system")) == 0)
+	if ((api.get_DRM_system = ((union {void *from; drmaa_get_DRM_system_function_t to;} *)dlsym(api.handle, "drmaa_get_DRM_system"))->to) == 0)
 		goto fault;
-	if ((api.get_DRMAA_implementation = (drmaa_get_DRMAA_implementation_function_t)dlsym(api.handle, "drmaa_get_DRMAA_implementation")) == 0)
+	if ((api.get_DRMAA_implementation = ((union {void *from; drmaa_get_DRMAA_implementation_function_t to;} *)dlsym(api.handle, "drmaa_get_DRMAA_implementation"))->to) == 0)
 		goto fault;
 
 	return api;

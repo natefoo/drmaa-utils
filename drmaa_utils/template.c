@@ -70,7 +70,7 @@ fsd_template_set_attr( fsd_template_t *self,
 		if (strlen (value) > DRMAA_MAX_ATTR_LEN)
 			fsd_exc_raise_fmt(
 				FSD_ERRNO_INVALID_ARGUMENT,
-				"Argument length exceeds max size: %d > %d", strlen(value), DRMAA_MAX_ATTR_LEN
+				"Argument length exceeds max size: %d > %d", (int)strlen(value), DRMAA_MAX_ATTR_LEN
 				);
 
 		if( self->attributes[ attr->code ] != NULL ) {

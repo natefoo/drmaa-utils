@@ -597,7 +597,7 @@ fsd_readline(FILE *f)
 			if (ch == '\n')
 				break;
 
-			if( index >= size )
+			if( index >= (int)size )
 			 {
 				size *= 2;
 				fsd_realloc( buffer, size + 1, char );

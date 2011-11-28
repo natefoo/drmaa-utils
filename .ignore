@@ -27,3 +27,5 @@ datetime_tab.h
 timedelta.c
 conf_tab.c
 conf_tab.h
+drmaa-run
+hpc-bash
