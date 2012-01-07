@@ -536,6 +536,7 @@ fsd_drmaa_session_wait_for_single_job(
 		 {
 			fsd_log_info(("Job %s is not known to DRMAA. Creating job object.", job_id));
 			job = self->new_job( self, job_id );
+			self->jobs->add( self->jobs, job );
 		 }
 		job->update_status( job );
 		while( !self->destroy_requested  &&  job->state < DRMAA_PS_DONE )
