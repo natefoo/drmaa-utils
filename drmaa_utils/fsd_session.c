@@ -411,6 +411,7 @@ fsd_drmaa_session_job_ps(
 		 {
 			fsd_log_info(( "job_ps: recreating job object: %s", job_id ));
 			job = self->new_job( self, job_id );
+			self->jobs->add( self->jobs, job );
 		 }
 		fsd_log_debug((" job->last_update_time = %u",  (unsigned int)job->last_update_time));
 		if( time(NULL) - job->last_update_time >= self->cache_job_state
@@ -533,7 +534,7 @@ fsd_drmaa_session_wait_for_single_job(
 		job = self->get_job( self, job_id );
 		if( job == NULL )
 		 {
-			fsd_log_info(("Job %s is not known to DRMAA. Creating job object."));
+			fsd_log_info(("Job %s is not known to DRMAA. Creating job object.", job_id));
 			job = self->new_job( self, job_id );
 		 }
 		job->update_status( job );
