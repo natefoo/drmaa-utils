@@ -532,8 +532,10 @@ fsd_drmaa_session_wait_for_single_job(
 	 {
 		job = self->get_job( self, job_id );
 		if( job == NULL )
-			fsd_exc_raise_fmt( FSD_DRMAA_ERRNO_INVALID_JOB,
-					"Job '%s' not found in DRMS queue", job_id );
+		 {
+			fsd_log_info(("Job %s is not known to DRMAA. Creating job object."));
+			job = self->new_job( self, job_id );
+		 }
 		job->update_status( job );
 		while( !self->destroy_requested  &&  job->state < DRMAA_PS_DONE )
 		 {
