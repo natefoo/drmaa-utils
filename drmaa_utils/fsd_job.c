@@ -149,10 +149,13 @@ fsd_job_get_termination_status( fsd_job_t *self,
 			rusage = fsd_iter_new( NULL, 0 );
 			rusage->append( rusage, fsd_asprintf(
 						"submission_time=%ld", (long)self->submit_time ) );
-			rusage->append( rusage, fsd_asprintf(
+			if (self->start_time)
+				rusage->append( rusage, fsd_asprintf(
 						"start_time=%ld", (long)self->start_time ) );
-			rusage->append( rusage, fsd_asprintf(
+			if (self->end_time)
+				rusage->append( rusage, fsd_asprintf(
 						"end_time=%ld", (long)self->end_time ) );
+
 			rusage->append( rusage, fsd_asprintf(
 						"cpu=%ld", self->cpu_usage ) );
 			rusage->append( rusage, fsd_asprintf(
