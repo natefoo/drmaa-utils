@@ -111,8 +111,10 @@ _fsd_log( int level, const char *file, const char *function,
 	const char *prefix;
 	const char *p;
 
-	if( level < (int)fsd_verbose_level )
+	if( level < (int)fsd_verbose_level ) {
+		free( message );
 		return;
+	}
 
 	if( message == NULL )
 		return;
@@ -149,8 +151,10 @@ _fsd_log( int level, const char *file, const char *function,
 		strftime( rep, sizeof(rep), "%Y-%m-%d %H:%M:%S", &utc );
 		fsd_log_info(( "logging started at: %s.%02ld Z", rep, microseconds/10000 ));
 		/* recheck */
-		if( level < (int)fsd_verbose_level )
+		if( level < (int)fsd_verbose_level ) {
+			free( message );
 			return;
+		}
 
 	 }
 	if( microseconds < fsd_logging_start.tv_usec )
