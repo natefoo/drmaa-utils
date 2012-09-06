@@ -41,7 +41,7 @@ fsd_iter_next( fsd_iter_t *self )
 static void
 fsd_iter_reset( fsd_iter_t *self )
 {
-	self->_length = 0;
+	self->_position = 0;
 }
 
 static int

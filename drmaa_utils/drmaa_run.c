@@ -144,7 +144,11 @@ fsd_drmaa_api_t load_drmaa()
 	memset(&api, 0, sizeof(api));
 
 	if (!path_to_drmaa) {
+#ifdef __APPLE__
+		path_to_drmaa = DRMAA_DIR_PREFIX"/lib/libdrmaa.dylib";
+#else
 		path_to_drmaa = DRMAA_DIR_PREFIX"/lib/libdrmaa.so";
+#endif
 	}
 
 	api.handle = dlopen(path_to_drmaa, RTLD_LAZY | RTLD_GLOBAL);

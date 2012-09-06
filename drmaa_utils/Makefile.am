@@ -45,7 +45,8 @@ COMMON_SOURCES = \
  thread.c thread.h \
  fsd_util.c util.h \
  drmaa_util.c drmaa_util.h \
- xmalloc.c xmalloc.h
+ xmalloc.c xmalloc.h \
+ exec.c exec.h
 
 libdrmaa_utils_la_SOURCES = $(COMMON_SOURCES) \
  fsd_session.c session.h \
