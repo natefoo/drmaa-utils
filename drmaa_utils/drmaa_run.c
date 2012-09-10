@@ -108,7 +108,7 @@ static int run_and_wait(fsd_drmaa_api_t drmaa_api, fsd_drmaa_run_opt_t run_opt);
 
 int main(int argc, char **argv)
 {
-	fsd_drmaa_api_t drmaa_api;
+	fsd_drmaa_api_t drmaa_api = { .handle = NULL };
 	fsd_drmaa_run_opt_t run_opt;
 	int status = -1;
 
