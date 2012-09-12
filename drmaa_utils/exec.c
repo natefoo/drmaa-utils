@@ -315,27 +315,32 @@ stream_ripper(void *fdp)
 {
 	int fd;
 	fsd_iter_t *chunks = NULL;
-	char buff[4096];
 	char *content = NULL;
-	ssize_t total_size = 1;
+	ssize_t total_bread = 0;
 	char *p = NULL;
 
 	fd = *((int *) fdp);
 	fsd_free(fdp);
 
-	fsd_log_enter(("9%d)", fd));
+	fsd_log_enter(("(%d)", fd));
 
 	TRY
 	  {
+		content = fsd_calloc(content, FSD_MAX_STREAM_BUFFER + 1, char);
+		content[0] = '\0';
+
 		while (1)
 		  {
-			ssize_t bread = read(fd, buff, sizeof(buff) - 1);
+			ssize_t bread = -1;
 
-			if (total_size > FSD_MAX_STREAM_BUFFER)
+			if (total_bread >= FSD_MAX_STREAM_BUFFER)
 			  {
-				fsd_log_error(("Stream buffer exceeded %d>%d", (int)total_size, FSD_MAX_STREAM_BUFFER));
-				/*TODO exception*/
+				fsd_log_error(("Stream buffer exceeded: %d", FSD_MAX_STREAM_BUFFER));
+				fsd_exc_raise_fmt(FSD_ERRNO_INTERNAL_ERROR, "Stream buffer exceeded: %d",  FSD_MAX_STREAM_BUFFER);
 			  }
+
+
+			bread =  read(fd, content + total_bread , FSD_MAX_STREAM_BUFFER - total_bread);
 
 			if (bread == -1)
 			  {
@@ -345,39 +350,16 @@ stream_ripper(void *fdp)
 			  {
 				break;
 			  }
-			else
+			else 
 			  {
-				total_size += bread;
-				fsd_log_debug(("%d: ripped %d bytes", fd, (int) bread));
-				buff[bread] = '\0';
-				/*
-				if (total_size < 0) /*sanity check *
-				  {
-					fsd_log_error(("total_size overflow - aborting..."));
-					goto fault;
-				  }
-				if (sm_list_add(&chunks, buff, bread + 1) == NULL)
-					goto fault;*/
+				total_bread += bread;
 			  }
 		  }
 
 		close(fd);
 
-		fsd_calloc(content, total_size, char);
+		content[total_bread] = '\0';
 
-		/*
-		for (l = chunks; l; l = l->next)
-		  {
-			size_t n = strlen((char*)l->data);
-
-			memcpy(p, l->data, n);
-			p += n;
-		  }
-		*/
-
-		content[total_size - 1] = '\0';
-
-		/*TODO sm_list_free(chunks, SM_TRUE);*/
 		fsd_thread_exit(content);
 		return NULL;
 	  }
