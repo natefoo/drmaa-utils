@@ -243,7 +243,7 @@ fsd_log_check_verbosity( void )
 	 } 
 	else 
 	 {
-		fsd_log_error(( "Illegal value of DRMAA_LOG_LEVEL=%s. Using default logging verbosity.", log_level_str));
+		fprintf(stderr,"Illegal value of DRMAA_LOG_LEVEL=%s. Using default logging verbosity.", log_level_str);
 	 } 
 }
 
