@@ -26,8 +26,8 @@
 
 #include <drmaa_utils/common.h>
 
-/*max stdout and stderr buffer size: 16MB */
-#define FSD_MAX_STREAM_BUFFER (16 * 1024 * 1024)
+/*max stdout and stderr buffer size: 1MB */
+#define FSD_MAX_STREAM_BUFFER ( 1024 * 1024)
 
 /**
  * Spawns a new command:
