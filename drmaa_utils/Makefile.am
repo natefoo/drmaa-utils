@@ -83,12 +83,16 @@ drmaa_attrib.c: drmaa_attrib.gperf
 timedelta.c: timedelta.rl
 	$(RAGEL) $(RAGELFLAGS) -o timedelta.c timedelta.rl
 	
-bin_PROGRAMS = drmaa-run  hpc-bash
+bin_PROGRAMS = drmaa-run  drmaa-run-bulk hpc-bash
 
 drmaa_run_SOURCES = $(COMMON_SOURCES) \
  drmaa_run.c
  
+drmaa_run_bulk_SOURCES = $(COMMON_SOURCES) \
+ drmaa_run_bulk.c
+  
 drmaa_run_LDFLAGS = -ldl
+drmaa_run_bulk_LDFLAGS = -ldl
 
 hpc_bash_SOURCES = $(COMMON_SOURCES) \
  hpc_bash.c
