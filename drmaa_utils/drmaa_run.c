@@ -315,6 +315,8 @@ int run_and_wait(fsd_drmaa_api_t api, fsd_drmaa_run_opt_t run_opt)
 
 	if ((api.set_attribute(jt, DRMAA_WD, working_directory, errbuf,	sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
+	if ((api.set_attribute(jt, "drmaa_wct_hlimit", "0:10:00", errbuf,	sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
+
 	if (run_opt.native_specification && (api.set_attribute(jt, DRMAA_NATIVE_SPECIFICATION, run_opt.native_specification, errbuf, sizeof(errbuf) - 1) != DRMAA_ERRNO_SUCCESS)) goto fault;
 
 
