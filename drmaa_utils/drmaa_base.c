@@ -288,8 +288,10 @@ int drmaa_get_num_##name##s( type *values, size_t *size ) \
 } \
 void drmaa_release_##name##s( type *values ) \
 { \
-	fsd_iter_t *iter = (fsd_iter_t*)values; \
-	iter->destroy(iter); \
+	if (values) { \
+		fsd_iter_t *iter = (fsd_iter_t*)values; \
+		iter->destroy(iter); \
+	} \
 }
 
 iter_function(attr_name, drmaa_attr_names_t)
