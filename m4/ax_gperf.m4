@@ -31,12 +31,8 @@ AC_DEFUN([AX_GPERF], [
 		ax_prog_gperf_ok=yes
 		GPERF=gperf
 	else
-		if echo $srcdir | grep -q "^/"; then
-			abs_srcdir="$srcdir"
-		else
-			abs_srcdir="`pwd`/$srcdir"
-		fi
-		GPERF="${abs_builddir}/scripts/gperf-fallback.sh"
+        abs_srcdir=`readlink -f "$srcdir"`
+		GPERF="${abs_srcdir}/scripts/gperf-fallback.sh"
 		cat >$GPERF <<EOF
 #!/bin/sh
 cat >&2 <<MESSAGE
