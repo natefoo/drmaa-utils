@@ -1,11 +1,10 @@
 #!/bin/sh
-# $Id$
 
 echo "Removing all generated files. ($PWD)"
 
 make maintainer-clean
 
-rm -f aclocal.m4 configure configure.scan config.h.in confdefs.h libtool
+rm -f aclocal.m4 configure configure.scan config.h.in config.h.in~ confdefs.h libtool
 
 rm -rf autom4te.cache
 rm -rf scripts
