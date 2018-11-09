@@ -30,4 +30,4 @@ check $LIBTOOLIZE
 check $AUTOMAKE
 check $AUTORECONF
 
-run autoreconf --install --force
+run autoreconf --install --force -Wall
