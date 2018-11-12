@@ -1,6 +1,6 @@
 AC_INIT([FedStage DRMAA utilities library], [2.0.1], [drmaa-pbspro-users@lists.fedstage.com], [drmaa_utils])
-AC_PREREQ(2.59)
-AC_REVISION([$Id$])
+AC_PREREQ([2.69])
+AC_REVISION([m4_esyscmd_s([git rev-parse HEAD])])
 AC_COPYRIGHT([
 FedStage DRMAA utilities library
 Copyright (C) 2006-2008  FedStage Systems
@@ -38,22 +38,18 @@ DEVELOPER_MODE="no"
 AM_CONDITIONAL([DEVELOPER_MODE], [test "x$DEVELOPER_MODE" = "xyes"])
 
 # command-line arguments:
-AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug],
-			[produce code suiteable for debugging and print logs at runtime]))
-AC_ARG_ENABLE(development, AC_HELP_STRING([--enable-development],
-			[enable development mode: make additional checks (suiteable for FedStage DRMAA utilities library developers)]))
+AC_ARG_ENABLE(debug, AS_HELP_STRING([--enable-debug],[produce code suiteable for debugging and print logs at runtime]))
+AC_ARG_ENABLE(development, AS_HELP_STRING([--enable-development],[enable development mode: make additional checks (suiteable for FedStage DRMAA utilities library developers)]))
 
-AC_ARG_WITH(drmaa-utils, AC_HELP_STRING([--with-drmaa-utils=...],
-		[used only to detect that drmaa utils is sub packaged]))
+AC_ARG_WITH(drmaa-utils, AS_HELP_STRING([--with-drmaa-utils=...],[used only to detect that drmaa utils is sub packaged]))
 AM_CONDITIONAL([DRMAA_UTILS_STANDALONE],
 		[test x$with_drmaa_utils = x])
 
 # programs:
 AC_PROG_CC
 AC_PROG_CPP
-AC_PROG_RANLIB
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 
@@ -137,12 +133,13 @@ case "$host_os" in
 esac
 
 
-AC_C_BIGENDIAN_CROSS
+AC_C_BIGENDIAN([BYTEORDER=4321],[BYTEORDER=1234])
+AC_DEFINE_UNQUOTED(BYTEORDER, $BYTEORDER, [1234 = LILENDIAN, 4321 = BIGENDIAN])
 
 # project prerequisites:
 
 # libraries:
-ACX_PTHREAD([CFLAGS="$CFLAGS $PTHREAD_CFLAGS" LIBS="$PTHREAD_LIBS $LIBS"],
+AX_PTHREAD([CFLAGS="$CFLAGS $PTHREAD_CFLAGS" LIBS="$PTHREAD_LIBS $LIBS"],
 		[AC_MSG_ERROR([POSIX threads library is required by DRMAA.])])
 
 # headers:
