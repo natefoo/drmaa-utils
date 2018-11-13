@@ -32,14 +32,14 @@
 #define _log_fmt(level, kind, args) \
 	do { \
 		if( (int)fsd_verbose_level <= level ) \
-			_fsd_log( level, __FILE__, __FUNCTION__, kind, \
+			_fsd_log( level, __FILE__, __func__, kind, \
 					fsd_asprintf args ); \
 	} while(0)
 
 #define _log_empty(level, kind) \
 	do { \
 		if( (int)fsd_verbose_level <= level ) \
-			_fsd_log( level, __FILE__, __FUNCTION__, kind, NULL ); \
+			_fsd_log( level, __FILE__, __func__, kind, NULL ); \
 	} while(0)
 
 #define _log_nop \

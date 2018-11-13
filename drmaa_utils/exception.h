@@ -92,7 +92,7 @@ fsd_exc_clear(void);
 	 { \
 		fsd_exc_try_block_t* volatile _fsd_exc_try_block = NULL; \
 		int _fsd_exc_rc; \
-		_fsd_exc_try_block = fsd_exc_try( __FUNCTION__, __LINE__ ); \
+		_fsd_exc_try_block = fsd_exc_try( __func__, __LINE__ ); \
 		if( _fsd_exc_try_block != NULL ) \
 			_fsd_exc_rc = setjmp( _fsd_exc_try_block->env ); \
 		else \
@@ -235,7 +235,7 @@ typedef enum {
 		do { \
 			if( ! (precondition) ) \
 				fsd_assertion_failed( __FILE__, __LINE__, \
-						__FUNCTION__, #precondition ); \
+						__func__, #precondition ); \
 		} while(0)
 #else
 #	define fsd_assert( precondition )  do{/* nothing */}while(0)

@@ -222,13 +222,14 @@ fsd_exec_wait(pid_t child_pid)
 int
 fsd_exec_sync(const char *command, char **args, const char *stdinb, char **stdoutb, char **stderrb)
 {
+	const char *volatile stdinb_v = stdinb;
 	pid_t child_pid = -1;
 	int stdin_d = -1;
 	int stdout_d = -1;
 	int stderr_d = -1;
 	int *arg = NULL;
 	size_t len = -1;
-	int exit_code = -1;
+	volatile int exit_code = -1;
 	int ret = -1;
 	fsd_thread_t err_t = 0;
 	fsd_thread_t out_t = 0;
@@ -260,19 +261,19 @@ fsd_exec_sync(const char *command, char **args, const char *stdinb, char **stdou
 		arg = NULL;
 
 
-		if (stdinb)
+		if (stdinb_v)
 		  {
-			len = strlen(stdinb);
+			len = strlen(stdinb_v);
 
 			while (1) {
-				ret = write(stdin_d, stdinb, len);
+				ret = write(stdin_d, stdinb_v, len);
 
 				if (ret == -1) {
 					fsd_exc_raise_sys(0);
 				}
 
 				len -= ret;
-				stdinb += ret;
+				stdinb_v += ret;
 
 				if (len == 0)
 					break;
@@ -316,7 +317,7 @@ stream_ripper(void *fdp)
 	int fd;
 	fsd_iter_t *chunks = NULL;
 	char *content = NULL;
-	ssize_t total_bread = 0;
+	volatile ssize_t total_bread = 0;
 	char *p = NULL;
 
 	fd = *((int *) fdp);

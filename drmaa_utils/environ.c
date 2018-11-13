@@ -73,7 +73,7 @@ fsd_environ_set( fsd_environ_t *self, char *name, char *value )
 	uint32_t hash;
 	fsd_environ_item_t *i;
 	fsd_environ_item_t *item = NULL;
-	bool replaced = false;
+	volatile bool replaced = false;
 
 	TRY
 	 {
@@ -111,7 +111,7 @@ fsd_environ_set( fsd_environ_t *self, char *name, char *value )
 static void
 fsd_environ_update( fsd_environ_t *self, const char *const envp[] )
 {
-	const char *const *i;
+	const char *const *volatile i;
 	for( i = envp;  *i;  i++ )
 	 {
 		const char *eq;

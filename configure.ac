@@ -47,6 +47,7 @@ AM_CONDITIONAL([DRMAA_UTILS_STANDALONE],
 
 # programs:
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
 LT_INIT
@@ -78,12 +79,12 @@ fi
 AC_SUBST([HAVE_DOT])
 
 # check compiler / set basic flags:
-if test x$ac_cv_prog_cc_stdc = xno; then
-	AC_MSG_ERROR([ANSI C compiler is required])
+if test x$ac_cv_prog_cc_c99 = xno; then
+	AC_MSG_ERROR([C99 compiler is required])
 fi
 
 if test x$GCC = xyes; then
-	CFLAGS=" -ansi ${CFLAGS}"
+	CFLAGS="-pedantic -std=c99 ${CFLAGS}"
 fi
 AM_CONDITIONAL([GCC], [test x$GCC = xyes])
 

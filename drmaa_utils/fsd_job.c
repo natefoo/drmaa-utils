@@ -370,7 +370,7 @@ fsd_job_set_empty( fsd_job_set_t *self )
 fsd_job_t *
 fsd_job_set_find_terminated( fsd_job_set_t *self )
 {
-	fsd_job_t *job = NULL;
+	fsd_job_t *volatile job = NULL;
 	size_t i;
 	fsd_mutex_t* volatile mutex = & self->mutex;
 

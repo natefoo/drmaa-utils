@@ -407,7 +407,7 @@ fsd_exc_raise_fmt( int error_code, const char *fmt, ... )
 void
 fsd_exc_raise_fmtv( int error_code, const char *fmt, va_list args )
 {
-	fsd_exc_t *exc = NULL;
+	fsd_exc_t *volatile exc = NULL;
 	char *volatile message = NULL;
 	TRY
 	 {
@@ -426,10 +426,11 @@ fsd_exc_raise_fmtv( int error_code, const char *fmt, va_list args )
 void
 fsd_exc_raise_sys( int errno_code )
 {
-	fsd_exc_t *exc = NULL;
+	volatile int errno_code_v = errno_code;
+	fsd_exc_t *volatile exc = NULL;
 
 	if( errno_code == 0 )
-		errno_code = errno;
+		errno_code_v = errno;
 	if( errno_code == ENOMEM )
 		exc = (fsd_exc_t*)&no_memory_exception;
 	else
@@ -439,12 +440,12 @@ fsd_exc_raise_sys( int errno_code )
 		volatile bool own_message = false;
 		TRY
 		 {
-			switch( errno_code )
+			switch( errno_code_v )
 			 {
 				case ETIMEDOUT:  code = FSD_ERRNO_TIMEOUT;  break;
 				default:         code = FSD_ERRNO_INTERNAL_ERROR;  break;
 			 }
-			message = (char*)fsd_astrerror( errno_code, (bool*)&own_message );
+			message = (char*)fsd_astrerror( errno_code_v, (bool*)&own_message );
 			exc = fsd_exc_new( code, message, own_message );
 		 }
 		EXCEPT_DEFAULT
@@ -591,7 +592,7 @@ fsd_exc_try_except(
 		char **error_message
 		)
 {
-	void *result = NULL;
+	void *volatile result = NULL;
 	TRY
 	 {
 		result = f( data );

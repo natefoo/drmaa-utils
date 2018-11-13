@@ -355,7 +355,7 @@ fsd_drmaa_session_control_job(
 		const char *job_id, int action )
 {
 	char **job_ids = NULL;
-	char **i;
+	char **volatile i;
 
 	TRY
 	 {
@@ -369,7 +369,7 @@ fsd_drmaa_session_control_job(
 
 		for( i = job_ids;  *i != NULL;  i++ )
 		 {
-			fsd_job_t *job = NULL;
+			fsd_job_t *volatile job = NULL;
 			TRY
 			 {
 				job = self->get_job( self, *i );
@@ -440,7 +440,7 @@ fsd_drmaa_session_synchronize(
 {
 	volatile bool wait_for_all = false;
 	char **volatile job_ids_buf = NULL;
-	const char **job_ids = NULL;
+	const char **volatile job_ids = NULL;
 	const char **i;
 
 	fsd_log_enter(( "(job_ids={...}, timeout=..., dispose=%d)",
@@ -814,7 +814,7 @@ fsd_drmaa_session_update_all_jobs_status(
 	fsd_log_enter(( "" ));
 	TRY
 	 {
-		const char **i;
+		const char **volatile i;
 		fsd_job_t *volatile job = NULL;
 		job_ids = self->get_submited_job_ids( self );
 		for( i = (const char **)job_ids;  *i;  i++ )

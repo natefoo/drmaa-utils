@@ -506,7 +506,7 @@ drmaa_wait(
 	DRMAA_API_BEGIN
 	fsd_drmaa_session_t *volatile session = NULL;
 	struct timespec ts;
-	char *result_job_id = NULL;
+	char *volatile result_job_id = NULL;
 
 	fsd_log_enter(( "(job_id=%s, timeout=%ld)", job_id, timeout ));
 

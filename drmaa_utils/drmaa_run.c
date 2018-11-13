@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 {
 	fsd_drmaa_api_t drmaa_api = { .handle = NULL };
 	fsd_drmaa_run_opt_t run_opt;
-	int status = -1;
+	volatile int status = -1;
 
 	fsd_log_enter(("(argc=%d)", argc));
 
@@ -164,6 +164,10 @@ fsd_drmaa_api_t load_drmaa()
 		fsd_exc_raise_code(FSD_ERRNO_INVALID_VALUE);
 	}
 
+#if defined __GNUC__ && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6)) || (__GNUC__ > 4))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 	if ((api.init = (drmaa_init_function_t)dlsym(api.handle, "drmaa_init")) == 0)
 		goto fault;
 	if ((api.exit = (drmaa_exit_function_t)dlsym(api.handle, "drmaa_exit")) == 0)
@@ -210,6 +214,9 @@ fsd_drmaa_api_t load_drmaa()
 		goto fault;
 	if ((api.get_DRMAA_implementation = (drmaa_get_DRMAA_implementation_function_t)dlsym(api.handle, "drmaa_get_DRMAA_implementation")) == 0)
 		goto fault;
+#if defined __GNUC__ && (((__GNUC__ == 4) && (__GNUC_MINOR__ >= 6)) || (__GNUC__ > 4))
+#pragma GCC diagnostic pop
+#endif
 
 	return api;
 

@@ -70,6 +70,7 @@ fsd_expand_drmaa_ph_expand( fsd_expand_drmaa_ph_t *self, char *s, unsigned set )
 				break;
 			default:
 				fsd_assert( false );
+				while(1);
 		 }
 		if( value == NULL )
 			value = "";

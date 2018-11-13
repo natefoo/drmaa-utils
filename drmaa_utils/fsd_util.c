@@ -140,7 +140,7 @@ fsd_explode( const char *const *vector, char glue, int n )
 	char *s;
 	const char *const *i;
 	unsigned idx, max=(unsigned)n;
-	size_t size =0;
+	volatile size_t size = 0;
 
 	TRY
 	 {
@@ -341,34 +341,35 @@ fsd_vasprintf( const char *fmt, va_list args )
 char *
 fsd_expand_printf_ph( const char *fmt )
 {
+	const char *volatile fmt_v = fmt;
 	char* volatile result = NULL;
 
-	if( strstr(fmt, "%m") == NULL )
+	if( strstr(fmt_v, "%m") == NULL )
 		return result;
 
 	TRY
 	 {
 		const char *pos;
-		while( (pos = strstr(fmt, "%m")) != NULL
-				&&  (pos == fmt  ||  pos[-1] != '%') )
+		while( (pos = strstr(fmt_v, "%m")) != NULL
+				&&  (pos == fmt_v  ||  pos[-1] != '%') )
 		 {
 			char* volatile errno_msg = NULL;
 			volatile bool own_errno_msg = false;
 			TRY
 			 {
 				char *buf = NULL;
-				size_t fmt_len = strlen(fmt);
-				size_t ph_pos = pos - fmt;
+				size_t fmt_len = strlen(fmt_v);
+				size_t ph_pos = pos - fmt_v;
 				size_t errno_msg_len;
 				errno_msg = fsd_astrerror( errno, (bool*)&own_errno_msg );
 				errno_msg_len = strlen(errno_msg);
 				fsd_calloc( buf, fmt_len-2+errno_msg_len+1, char );
 				/* replace ``%m`` with strerror(errno) */
-				strncat( buf, fmt, ph_pos );
+				strncat( buf, fmt_v, ph_pos );
 				strcat( buf+ph_pos, errno_msg );
-				strcat( buf+ph_pos+errno_msg_len, fmt+ph_pos+2 );
+				strcat( buf+ph_pos+errno_msg_len, fmt_v+ph_pos+2 );
 				fsd_free( result );
-				fmt = result = buf;
+				fmt_v = result = buf;
 			 }
 			FINALLY
 			 {
@@ -385,6 +386,7 @@ fsd_expand_printf_ph( const char *fmt )
 	 }
 	END_TRY
 
+	fmt = fmt_v;
 	return result;
 }
 
@@ -491,7 +493,7 @@ fsd_read_file(
 {
 	volatile int fd = -1;
 	char* volatile buffer = NULL;
-	size_t size = 0;
+	volatile size_t size = 0;
 	size_t capacity = 0;
 	ssize_t n_read;
 
@@ -547,7 +549,7 @@ fsd_getcwd(void)
 {
 	char* volatile buffer = NULL;
 	char* volatile result = NULL;
-	size_t size = 64;
+	volatile size_t size = 64;
 
 	TRY
 	 {
@@ -581,7 +583,7 @@ fsd_readline(FILE *f)
 {
 	char* volatile buffer = NULL;
 	char* volatile result = NULL;
-	size_t size = 1024;
+	volatile size_t size = 1024;
 	int ch = '\0';
 	int index = 0;
 
