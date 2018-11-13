@@ -441,7 +441,7 @@ fsd_drmaa_session_synchronize(
 	volatile bool wait_for_all = false;
 	char **volatile job_ids_buf = NULL;
 	const char **volatile job_ids = NULL;
-	const char **i;
+	const char **volatile i;
 
 	fsd_log_enter(( "(job_ids={...}, timeout=..., dispose=%d)",
 			(int)dispose ));
