@@ -89,6 +89,8 @@ typedef struct
 typedef struct
 {
 	char *native_specification;
+	char *stdout_name;
+	char *stderr_name;
 	char *walltime;
 	char *rusage_file;
 	bool interactive;
@@ -255,6 +257,12 @@ static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
 		if (strncmp(argv[0],"-native=", 8) == 0) {
 			options.native_specification = argv[0] + 8;
 			fsd_log_info(("native specification = '%s'", options.native_specification));
+		} else if (strncmp(argv[0],"-stdout=", 8) == 0) {
+			options.stdout_name = argv[0] + 8;
+			fsd_log_info(("stdout = '%s'", options.stdout_name));
+		} else if (strncmp(argv[0],"-stderr=", 8) == 0) {
+			options.stderr_name = argv[0] + 8;
+			fsd_log_info(("stderr = '%s'", options.stderr_name));
 		} else {
 			fsd_log_fatal(("unknown option: %s", argv[0]));
 			exit(1); /* TODO exception */
@@ -327,9 +335,15 @@ int run_and_wait(fsd_drmaa_api_t api, fsd_drmaa_run_opt_t run_opt)
 
 	/* stdout.PID stderr.PID */
 	sprintf(stdin_name, ":%s/.stdin.%u", working_directory, (unsigned int) getpid());
-	sprintf(stdout_name, ":%s/.stdout.%u", working_directory, (unsigned int) getpid());
-	sprintf(stderr_name, ":%s/.stderr.%u", working_directory, (unsigned int) getpid());
 
+	if (run_opt.stdout_name)
+		sprintf(stdout_name, ":%s", run_opt.stdout_name);
+	else
+		sprintf(stdout_name, ":%s/.stdout.%u", working_directory, (unsigned int) getpid());
+	if (run_opt.stderr_name)
+		sprintf(stderr_name, ":%s", run_opt.stderr_name);
+	else
+		sprintf(stderr_name, ":%s/.stderr.%u", working_directory, (unsigned int) getpid());
 
 	/* read stdin */
 	if (! isatty(0)) {
@@ -399,7 +413,8 @@ retry1:
 
 			close(fd);
 
-			unlink(stdout_name + 1);
+			if (!run_opt.stdout_name)
+				unlink(stdout_name + 1);
 		}
 retry2:
 		if (stat(stderr_name + 1, & stat_buf) == -1) {
@@ -421,7 +436,8 @@ retry2:
 
 			close(fd);
 
-			unlink(stderr_name + 1);
+			if (!run_opt.stderr_name)
+				unlink(stderr_name + 1);
 		}
 
 	}
