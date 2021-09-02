@@ -29,4 +29,10 @@ timedelta.c
 conf_tab.c
 conf_tab.h
 drmaa-run
+drmaa-run-bulk
+drmaa-job-ps
 hpc-bash
+*.swp
+*.la
+*.lo
+*.o
