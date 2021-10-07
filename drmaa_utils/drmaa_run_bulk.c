@@ -259,7 +259,7 @@ static fsd_drmaa_run_bulk_opt_t parse_args(int argc, char **argv)
 	argv++;
 	argc--;
 
-	while (argc >= 0 && argv[0][0] == '-')
+	while (argc > 0 && argv[0][0] == '-')
 	{
 
 		if (strncmp(argv[0],"-native=", 8) == 0) {

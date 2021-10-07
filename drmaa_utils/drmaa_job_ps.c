@@ -243,7 +243,11 @@ static fsd_drmaa_ps_opt_t parse_args(int argc, char **argv)
 	argv++;
 	argc--;
 
-	/* TODO arg count check */
+	if (argc != 1) {
+		fsd_log_fatal(("syntax error\ndrmaa-job-ps {job-id}"));
+		exit(1);
+	}
+
 	options.jobid = argv[0];
 
 	return options;
