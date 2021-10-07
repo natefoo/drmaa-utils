@@ -65,7 +65,7 @@ AC_PATH_PROG([TR], [tr])
 # code generation tools:
 AC_PROG_YACC
 AX_GPERF
-AC_CHECK_PROGS([RAGEL], [ragel], [sh m4/missing-dev-prog.sh ragel])
+AC_CHECK_PROGS([RAGEL], [ragel], [sh ../m4/missing-dev-prog.sh ragel])
 
 # reStructuredText processing:
 AX_DOCUTILS
