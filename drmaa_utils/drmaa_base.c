@@ -277,7 +277,7 @@ int drmaa_get_next_##name( type *values, char *value, size_t value_len ) \
 	strlcpy( value, iter->next(iter), value_len ); \
 	DRMAA_API_END \
 } \
-int drmaa_get_num_##name##s( type *values, size_t *size ) \
+int drmaa_get_num_##name##s( type *values, int *size ) \
 { \
 	char error_diagnosis[1]; \
 	size_t error_diag_len = sizeof(error_diagnosis); \
