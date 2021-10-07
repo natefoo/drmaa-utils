@@ -251,7 +251,7 @@ static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
 	argv++;
 	argc--;
 
-	while (argc >= 0 && argv[0][0] == '-')
+	while (argc > 0 && argv[0][0] == '-')
 	{
 
 		if (strncmp(argv[0],"-native=", 8) == 0) {
@@ -272,7 +272,11 @@ static fsd_drmaa_run_opt_t parse_args(int argc, char **argv)
 		argc--;
 	}
 
-	/* TODO arg count check */
+	if (argc == 0) {
+		fsd_log_fatal(("syntax error\ndrmaa-run [-native=...] [-stdout=...] [-stderr=...] {command} [args ...]"));
+		exit(1);
+	}
+
 	options.command = argv[0];
 	argv++;
 	argc--;
