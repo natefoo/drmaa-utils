@@ -312,9 +312,9 @@ int drmaa_get_next_attr_value( drmaa_attr_values_t* values,
 	char *value, size_t value_len );
 int drmaa_get_next_job_id( drmaa_job_ids_t* values,
 	char *value, size_t value_len );
-int drmaa_get_num_attr_names( drmaa_attr_names_t* values, size_t *size );
-int drmaa_get_num_attr_values(drmaa_attr_values_t* values, size_t *size );
-int drmaa_get_num_job_ids( drmaa_job_ids_t* values, size_t *size );
+int drmaa_get_num_attr_names( drmaa_attr_names_t* values, int *size );
+int drmaa_get_num_attr_values(drmaa_attr_values_t* values, int *size );
+int drmaa_get_num_job_ids( drmaa_job_ids_t* values, int *size );
 void drmaa_release_attr_names( drmaa_attr_names_t* values );
 void drmaa_release_attr_values( drmaa_attr_values_t* values );
 void drmaa_release_job_ids( drmaa_job_ids_t* values );
