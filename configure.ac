@@ -1,5 +1,5 @@
-AC_INIT([FedStage DRMAA utilities library], [2.0.1], [drmaa-pbspro-users@lists.fedstage.com], [drmaa_utils])
-AC_PREREQ([2.69])
+AC_INIT([FedStage DRMAA utilities library],[2.0.1],[drmaa-pbspro-users@lists.fedstage.com],[drmaa_utils])
+AC_PREREQ([2.72])
 AC_REVISION([m4_esyscmd_s([git rev-parse HEAD])])
 AC_COPYRIGHT([
 FedStage DRMAA utilities library
@@ -47,7 +47,6 @@ AM_CONDITIONAL([DRMAA_UTILS_STANDALONE],
 
 # programs:
 AC_PROG_CC
-AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
 LT_INIT
@@ -146,7 +145,6 @@ AX_PTHREAD([CFLAGS="$CFLAGS $PTHREAD_CFLAGS" LIBS="$PTHREAD_LIBS $LIBS"],
 # headers:
 AC_CHECK_HEADERS([execinfo.h fcntl.h inttypes.h libintl.h limits.h malloc.h stddef.h stdint.h stdlib.h string.h sys/time.h unistd.h])
 AC_HEADER_STDBOOL
-AC_HEADER_TIME
 
 # types and structures:
 AC_TYPE_PID_T
