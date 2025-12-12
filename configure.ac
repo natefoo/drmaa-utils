@@ -1,5 +1,5 @@
 AC_INIT([FedStage DRMAA utilities library],[2.0.1],[drmaa-pbspro-users@lists.fedstage.com],[drmaa_utils])
-AC_PREREQ([2.72])
+AC_PREREQ([2.71])
 AC_REVISION([m4_esyscmd_s([git rev-parse HEAD])])
 AC_COPYRIGHT([
 FedStage DRMAA utilities library
