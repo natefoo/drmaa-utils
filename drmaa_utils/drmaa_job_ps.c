@@ -150,7 +150,7 @@ fsd_drmaa_api_t load_drmaa()
 	if (!api.handle) {
 		const char *msg = dlerror();
 
-		if (!msg)
+		if (msg)
 			fsd_log_fatal(("Could not load DRMAA library: %s (DRMAA_LIBRARY_PATH=%s)\n", msg, path_to_drmaa));
 		else
 			fsd_log_fatal(("Could not load DRMAA library (DRMAA_LIBRARY_PATH=%s)\n", path_to_drmaa));

@@ -177,10 +177,12 @@ fsd_conf_lex(
 			case '#':  /* a comment */
 				while( c<end && *c != '\n' )
 					c++;
-			case '\n':  /* no break */
+				/* fall through */
+			case '\n':
 				lexer->lineno++;
 				lexer->cline = c+1;
-			case ' ':  case '\t':  case '\r':  /* no break */
+				/* fall through */
+			case ' ':  case '\t':  case '\r':
 				c++;
 				break;
 			default:

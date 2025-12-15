@@ -55,6 +55,7 @@ libdrmaa_utils_la_SOURCES = $(COMMON_SOURCES) \
 
 libdrmaa_utils_la_LDFLAGS = -static
 libdrmaa_utils_la_CPPFLAGS = -fPIC
+libdrmaa_utils_la_CFLAGS = $(AM_CFLAGS) -Wno-implicit-fallthrough
 
 if GCC 
 if !DEVELOPER_MODE
@@ -80,6 +81,7 @@ endif
 
 drmaa_attrib.c: drmaa_attrib.gperf
 	$(GPERF) $(GPERFFLAGS) --output-file=drmaa_attrib.c drmaa_attrib.gperf
+lookup3.o: CFLAGS += -Wno-implicit-fallthrough
 timedelta.c: timedelta.rl
 	$(RAGEL) $(RAGELFLAGS) -o timedelta.c timedelta.rl
 	
