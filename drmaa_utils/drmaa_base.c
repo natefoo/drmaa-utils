@@ -517,7 +517,15 @@ drmaa_wait(
 				session, job_id, drmaa_timeout_time(timeout, &ts),
 				stat, (fsd_iter_t**)rusage
 				);
-		strlcpy( job_id_out, result_job_id, job_id_out_len );
+		/* result_job_id might be NULL if wait_for_any_job() timed out */
+		if( result_job_id != NULL )
+		  {
+			strlcpy( job_id_out, result_job_id, job_id_out_len );
+		  }
+		else if( job_id_out && job_id_out_len > 0 )
+		  {
+			job_id_out[0] = '\0';
+		  }
 	 }
 	FINALLY
 	 {
